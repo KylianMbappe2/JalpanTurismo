@@ -2,6 +2,10 @@
 
 Curso de IA aplicada al turismo con acceso por **nombre de usuario y PIN** (4 a 6 números), sin correo. Cada alumno elige una actividad, la hace en la misma pantalla y guarda el avance. Una entrega se puede corregir y volver a guardar mientras la actividad siga abierta. El instructor ve en Seguimiento quién entregó y quién no, y abre el trabajo de cada alumno.
 
+La interfaz está pensada para celular: navegación inferior del administrador, cinco accesos (Inicio, Entregas, Alumnos, Actividades y Perfil), resúmenes con colores suaves, tarjetas por alumno y controles táctiles grandes. El perfil muestra el rol **Administrador**; PostgreSQL conserva el rol interno `instructor` y valida los permisos en cada RPC. El nombre de usuario por sí solo no concede acceso administrativo.
+
+Para activar la cuenta existente de Jonathan, ejecuta los archivos numerados de `~/Desktop/sql jalpan`: `01_Actualizar_Aula_Sierra.sql` y `02_Activar_admin_jonathan.sql`. El segundo promueve la cuenta y conserva su PIN y sus trabajos. Sal y vuelve a entrar después. `LEEME.txt` contiene los pasos.
+
 ## Activar en Supabase
 
 La URL y la clave pública ya están configuradas en `.env.local`. No uses una clave `service_role` ni `secret` en la web. No hace falta configurar Supabase Auth, correo ni SMTP.
@@ -47,6 +51,8 @@ pnpm build
 ```
 
 `pnpm dev` imprime la URL local, normalmente `http://127.0.0.1:4173`. `pnpm build` genera `dist/` con configuración pública; vuelve a compilar al cambiar `.env.local`. No hay dependencias de producción ni analíticas.
+
+En Vercel, `vercel.json` ejecuta la compilación y publica `dist/`, donde se genera `config.json`, siguiendo la [configuración oficial de Vercel](https://vercel.com/docs/project-configuration/vercel-json). Configura `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` en las variables del proyecto y vuelve a desplegar. `.env.local` no se sube a GitHub. Los valores públicos para copiar están en `~/Desktop/sql jalpan/03_Configuracion_Vercel.txt`; nunca uses una clave secret/service_role.
 
 Las preguntas proceden de los cinco PDF de `expo`; el diagnóstico exige 14 respuestas y las prácticas admiten respuestas opcionales según las guías. Para modificar el catálogo edita `public/forms.js`, actualiza la versión cuando corresponda y ejecuta `pnpm schema`. Revisa el instalador antes de aplicarlo. Las migraciones están en `supabase/migrations/002_course.sql` y `supabase/migrations/003_editable.sql`; `pnpm schema` las reúne en `supabase/setup.sql`.
 

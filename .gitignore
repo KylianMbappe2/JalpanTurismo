@@ -6,4 +6,5 @@ dist/
 .e2e/
 .openai/*.local.json
 .openai/hosting.json
+.vercel/
 *.zip

@@ -1,5 +1,26 @@
 # Verificación · entregas editables y seguimiento · 20 de octubre de 2026 UTC
 
+## Panel de administrador y prioridad móvil
+
+| Caso / comprobación | Resultado | Evidencia |
+| --- | --- | --- |
+| ADMIN-01 | Aprobado: perfil de administrador, identidad, resumen del grupo y regreso al panel | `tests/admin.e2e.ts`; escritorio y móvil |
+| ADMIN-02 | Aprobado: llamarse jonathan no concede permisos; el servidor debe devolver rol instructor | Cuenta simulada con el mismo nombre y rol alumno queda sin acceso al perfil administrativo |
+| ADMIN-03 | Aprobado: seguimiento, entregas, participantes, actividades y perfil sin desbordamiento horizontal a 320, 360, 390, 430, 768, 1024 y 1440 px; navegación con altura táctil mínima de 44 px | Captura `perfil-admin-movil` |
+| ADMIN-04 | Aprobado: lista móvil muestra actividad y estado; filtro de faltantes abre el trabajo correcto | Captura `trabajo-alumno-en-movil` |
+| Regresión e2e | Aprobado: 48/48, incluidos EDIT-01/02 y TRACK-01/02 | Ejecución `01a15906-5075-7e46-962e-960cd2a6eeaa`; `.e2e/admin-full/report.json` |
+| PostgreSQL + PostgREST reales | Aprobado: 2/2 sobre PostgreSQL 17 + PostgREST v12.2.3; guardado, archivos, PIN, correcciones, matriz y borradores | Ejecución `01a15906-5bc6-7ee3-b244-2df181470d1b`; `.e2e/admin-real-stack/report.json` |
+| Unitarias / build / auditoría | Aprobado: 31/31, compilación correcta, sin vulnerabilidades conocidas | `pnpm test`, `pnpm build`, `pnpm audit` |
+| Colores | Aprobado: texto principal 10.63:1, secundario 5.62:1, botón 6.09:1 y estados entre 5.75:1 y 6.18:1 | Cálculo de luminancia de los colores usados en `public/mobile.css`; capturas inspeccionadas |
+| Promoción de la cuenta real | Pendiente de ejecutar SQL por el organizador | Se verificó que el PIN actual entra; Supabase devuelve rol `student`. Scripts preparados en `~/Desktop/sql jalpan` |
+| Seguimiento en Supabase | Bloqueado hasta instalar el SQL nuevo | Preflight de `course_tracking`: HTTP 404 / PGRST202. No se cambió el rol ni el PIN de producción |
+
+La carpeta `~/Desktop/sql jalpan` contiene `01_Actualizar_Aula_Sierra.sql` (idéntico a setup.sql), `02_Activar_admin_jonathan.sql` (promueve la cuenta existente sin tocar su PIN ni sus trabajos), instrucciones y configuración pública de Vercel. No contiene datos de otros alumnos ni se versiona en GitHub.
+
+La interfaz usa el rol SQL existente `instructor`, presentado como **Administrador**. Las consultas y permisos se siguen comprobando en PostgreSQL. Las pruebas de interfaz se ejecutaron con e2e 0.21.2, motor web 0.15.2 y Chromium con tamaños móviles y de escritorio; no equivalen a una prueba física en todos los teléfonos. TRACK-01 conserva el resultado esperado y consulta los contadores móviles fuera de la cabecera de la tabla, que ahora se convierte en tarjetas.
+
+Se detectó que el sitio Vercel servía la portada pero `/config.json` daba 404 y no había variables de entorno. Se añadió `vercel.json` para compilar y publicar `dist/`; las variables públicas de producción se configuraron sin guardar claves en el repositorio. La activación del administrador en Supabase sigue siendo el paso manual de los SQL indicados.
+
 ## Resultado actual
 
 | Caso / suite | Resultado esperado y evidencia | Estado |
