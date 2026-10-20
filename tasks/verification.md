@@ -1,0 +1,123 @@
+# Verificación · entregas editables y seguimiento · 20 de octubre de 2026 UTC
+
+## Resultado actual
+
+| Caso / suite | Resultado esperado y evidencia | Estado |
+| --- | --- | --- |
+| `pnpm test` | 31/31 unitarias: sesión, guardado, estados, CSV, respuestas y archivos | Aprobado |
+| `pnpm build`; sintaxis JS | Compilación y `node --check` de app, curso y datos | Aprobado |
+| EDIT-01 | Entregar, editar y volver a entregar mantiene folio y archiva la versión anterior; barra visible y sin desbordamiento horizontal | Aprobado en móvil y escritorio |
+| EDIT-02 | Actividad cerrada muestra motivo y respuestas deshabilitadas, sin botones de escritura | Aprobado en móvil y escritorio |
+| TRACK-01 | Matriz, contadores, filtro de faltantes y CSV con el alumno correcto | Aprobado en móvil y escritorio |
+| TRACK-02 | Detalle de borrador y entrega; PDF descargado con contenido idéntico | Aprobado en móvil y escritorio |
+| Suite habitual e2e | 40/40; ejecución `01a158ee-7d19-7eeb-9b29-b051faf64a22`, `.e2e/final-v3-browser/report.json` | Aprobado |
+| STACK-01 | Registro, borrador, entrega, archivos, restablecer PIN, corregir mismo folio, matriz, historial y detalle del borrador en PostgreSQL 17 + PostgREST v12.2.3 | Aprobado 2/2; ejecución `01a158ef-9868-77b7-a6e4-c07350cb4cd3`, `.e2e/final-v3-real-stack/report.json` |
+| P01–P07 / C01–C25 | Registro/PIN, bloqueo, revisiones, aislamiento y permisos; base aislada `aula_v3qa` | Aprobado |
+| F01–F08 | Tipos, límites, propietario, descarga docente y edición de archivos tras entrega; actividad oculta bloquea escritura | Aprobado |
+| E01 | Guardar cambios de trabajo conserva entrega oficial hasta volver a entregar | Aprobado |
+| E02–E03 | Actualiza misma fila/folio, historial y contador; reintento idéntico no crea versión | Aprobado |
+| E04 | Pestaña desactualizada recibe PT409 | Aprobado |
+| E05 | Actividad oculta bloquea cambios; reintento idéntico conserva comprobante | Aprobado |
+| E06 | Fecha vencida bloquea solo con lock_after_due activo | Aprobado |
+| E07–E08 | Seguimiento y detalle solo para instructor; alumnos aislados; totales correctos | Aprobado |
+| E09 | Reintento con otro folio o sin consentimiento rechazado | Aprobado; reprodujo un fallo real antes de corregir `course_complete` |
+| REINSTALL / SEED | Instalador completo dos veces: comparación JSON íntegra de usuarios, sesiones, borradores, entregas, archivos binarios, versiones y catálogo; seed bcrypt solo desde SQL, respeta PIN ya cambiado | Aprobado |
+| LIVE-01 | Registro, borrador, PDF, recarga, acceso y entrega en Supabase real, usuario `prueba.tecnica.mvgk7ck7`, nombre **PRUEBA TÉCNICA · conexión** | Aprobado; ejecución `01a158ec-7c6a-78bb-ad40-5b33f6230d69`, `.e2e/final-v3-supabase/report.json` |
+| LIVE-02 / seguimiento en Supabase | Corrección y nuevas consultas docentes contra el proyecto real | Bloqueado: falta ejecutar SQL nuevo; preflight `course_student_work` devuelve HTTP 404 / PGRST202. No se instaló SQL ni se cambió la cuenta del instructor en producción |
+
+Las pruebas finales de navegador se ejecutaron desde `/private/tmp/aula-v3-final` con las mismas fuentes y versiones e2e 0.21.2 / motor web 0.15.2, porque iCloud bloqueaba lecturas de dependencias en Desktop. Los reportes y capturas se conservaron también en `.e2e/` del proyecto. Sin proveedor de modelo: acciones y comprobaciones exactas con e2e.
+
+Se corrigieron dos fallos visuales comprobados con pruebas: el campo de archivo oculto heredaba ancho del formulario y producía desplazamiento lateral; `overflow:hidden` del panel impedía fijar la barra inferior al viewport. Capturas finales inspeccionadas. En la prueba de pila real se corrigió el selector del folio y se esperó a terminar el cierre de sesión antes de abrir el registro docente; no se cambió la aplicación para satisfacer esas comprobaciones.
+
+Instaladores: `~/Desktop/sql/Aula_Sierra_Curso_v2.sql` coincide con `supabase/setup.sql`; `~/Desktop/sql/Admin_jonathan.sql` queda fuera del repositorio y con permisos 600. `.env.local`, configuración privada de hosting y reportes están ignorados. El PIN inicial del instructor no aparece en las fuentes versionadas.
+
+## Historial · 19 de octubre de 2026
+
+## Versión 2.1 · acceso con usuario y PIN
+
+| Suite | Resultado |
+| --- | --- |
+| `pnpm test` | 27/27 aprobadas (incluye reglas de usuario/PIN, sesión tras recarga, sesión caducada, bloqueo) |
+| `tests/course-database.sql` en PostgreSQL 17 | P01–P07 y C01–C25 aprobados, en base nueva y en base con entrega v1 previa; datos revertidos |
+| Instalador | Aplicado dos veces sobre v1 con datos: entrega anterior conservada; aplicado en base vacía |
+| `pnpm exec e2e run` (API simulada) | 30/30 en escritorio y móvil · ejecución `01a156a8-92db-7de3-bf0e-d3334b9f954a` |
+| `e2e.stack.config.ts` (PostgreSQL + PostgREST reales) | 2/2 (móvil y escritorio) · ejecución `01a156a9-4c44-76b4-9606-3e019f9f9be9` |
+| Archivos adjuntos | F01–F08 en SQL (subir, descargar, nombre seguro, permisos, HTML/oversize rechazados, límite de 5, sin cambios tras entregar); FILE-01 e2e; STACK-01 sube PDF y foto y el docente descarga el PDF idéntico |
+| Re-verificación final | 28 unitarias · 32/32 e2e (`01a156b9-240b-79c6-9d71-56b8b7a0a844`) · 2/2 pila real (`01a156b9-ccca-75b3-a804-c33673309994`) · SQL en base vacía, base usada y base v1 con entrega conservada |
+| `pnpm audit` | Sin vulnerabilidades conocidas |
+
+| Caso | Resultado esperado | Estado |
+| --- | --- | --- |
+| AUTH-01 | Acceso obligatorio, PIN incorrecto rechazado, salir cierra la sesión también tras recargar | Aprobado |
+| AUTH-02 | Registro con usuario y PIN; PIN repetido distinto rechazado; entra directo al curso | Aprobado |
+| AUTH-03 | Instructor restablece un PIN; validación de 4–6 números | Aprobado |
+| COURSE-01 | Borrador conservado al recargar y tras salir y volver a entrar | Aprobado |
+| STACK-01 | Registro, borrador, recarga, PIN incorrecto, entrega, panel docente, detalle, restablecer PIN y entrega conservada con el nuevo PIN, sobre base real | Aprobado |
+| P01–P07 | Registro, validación, usuarios únicos, PIN cifrado, intentos contados, bloqueo tras 5 fallos | Aprobado |
+| C01–C25 | Revisiones, idempotencia, entrega atómica, aislamiento, permisos docentes, restablecer PIN invalida sesiones, logout, tokens falsos y tablas/funciones internas cerradas | Aprobado |
+| LIVE-01 | Supabase real del organizador: registro con usuario y PIN, borrador, PDF adjunto, recarga, salir/entrar, entrega | Aprobado · ejecución `01a156c2-924b-741e-a1d4-bcf9e470bb7e` · usuario `prueba.tecnica.mvfyla59` (borrable con `~/Desktop/sql/Borrar_prueba_tecnica.sql`). Pendiente: probar panel docente con el usuario real del instructor |
+
+Las secciones siguientes describen la versión anterior con correo y contraseña, ya reemplazada.
+
+## Versión 2 · curso con acceso
+
+**25 pruebas unitarias aprobadas**, 25 comprobaciones sobre PostgreSQL 17 aprobadas y **30 pruebas e2e aprobadas** en escritorio y móvil. Runner e2e 0.21.2 y motor web 0.15.2, sin modelo ni correos externos. Ejecución completa: `01a1568f-37ff-7148-b752-4e016e6e7d45`. Reporte conservado en `.e2e/course-v2/report.json`. Auth/REST del navegador se simulan; las reglas SQL se prueban en PostgreSQL real aislado.
+
+| Caso | Resultado esperado | Estado |
+| --- | --- | --- |
+| AUTH-01 | Acceso obligatorio, error de credenciales y cierre de sesión | Aprobado en escritorio y móvil |
+| AUTH-02 | Consentimiento y confirmación de correo | Aprobado en escritorio y móvil |
+| AUTH-03 | Recuperación, cambio de clave y tokens retirados de URL | Aprobado en escritorio y móvil |
+| COURSE-01 | Borrador recuperado tras recargar e iniciar sesión | Aprobado en escritorio y móvil |
+| COURSE-02 | Fallo conserva datos y permite reintento sin fingir éxito | Aprobado en escritorio y móvil |
+| COURSE-03 | Alumno sin acceso al panel docente | Aprobado en escritorio y móvil |
+| COURSE-04 | Siete materiales y PDF con MIME correcto | Aprobado en escritorio y móvil |
+| COURSE-05 | Navegación fallida conserva respuestas; reintento termina navegación | Aprobado en escritorio y móvil |
+| TEACHER-01 | Detalle y CSV con respuestas y dudas | Aprobado en escritorio y móvil |
+| TEACHER-02 | Publicación de actividades guardada | Aprobado en escritorio y móvil |
+| WEB-01–05 | Cinco actividades, privacidad, requisitos originales, opciones, consentimiento, reintento, entrega y diseño adaptable | Aprobado en escritorio y móvil |
+| C01–C25 | Roles verificados, borradores, revisión optimista, idempotencia, entrega atómica, aislamiento, inmutabilidad y acceso anónimo denegado | Aprobado en PostgreSQL 17 aislado |
+| MIG-01 | Instalador completo conserva una entrega anterior | Aprobado; legado conservado y 25 casos SQL repetidos tras instalación |
+| LIVE-V2 | Registro, acceso y guardado contra Supabase del organizador | Bloqueado: falta SQL v2 y cuenta de prueba confirmada. Nueva RPC devuelve PGRST202. Auth habilitado exige confirmar correo. No se enviaron correos ni crearon cuentas reales. |
+
+Después del último ajuste de la tabla móvil, AUTH-01, COURSE-01, WEB-01 y WEB-05 se repitieron: **8/8 aprobadas**, ejecución `01a15694-acdc-78ae-907b-0c31c016ea1e`, evidencia en `.e2e/course-v2-mobile-final`. Inspección visual de acceso, tabla del alumno y panel docente. Auditoría: sin vulnerabilidades conocidas. Tokens solo en memoria. El instalador revoca el envío anónimo dentro de la misma transacción. LIVE-01 abajo corresponde a v1 y no demuestra el curso v2.
+
+## Historial · versión 1 sin cuentas
+
+- `pnpm test`: **13 aprobadas**. Datos obligatorios, formatos, longitudes, opciones permitidas, prácticas opcionales, configuración pública, rechazo de claves privadas, comprobantes HTTP y fallos de conexión.
+- `pnpm audit`: **sin vulnerabilidades conocidas**. Las dependencias son solo de pruebas; la web no carga librerías de producción.
+- `pnpm build`: genera sitio estático; sin configuración no habilita entregas ni finge guardarlas.
+- `node --check public/app.js`: aprobado.
+
+## Navegador · e2e 0.21.2 / motor web 0.15.2
+
+**10 aprobadas**, 0 fallidas y 0 omitidas: cada caso se ejecutó en escritorio (1440 × 1000) y móvil (390 × 844). Reporte detallado local: `.e2e/report.json`; resumen: `.e2e/summary.md`.
+
+| Caso | Resultado esperado | Estado |
+| --- | --- | --- |
+| WEB-01 | Cinco actividades disponibles y aviso de privacidad accesible | Aprobado |
+| WEB-02 | Nombre y 14 respuestas del diagnóstico obligatorias; “No” válido; edición conserva respuestas; envío sin configuración deshabilitado | Aprobado |
+| WEB-03 | Veinte preguntas del agente, selección múltiple, tamaño de grupo y respuestas opcionales | Aprobado |
+| WEB-04 | Consentimiento requerido; fallo de API conserva datos; reintento mantiene UUID; confirmación solo tras recibo válido | Aprobado (API interceptada, sin escritura externa) |
+| WEB-05 | Sin desbordamiento horizontal a 320, 768, 1024 y 1440 px; una actividad inexistente vuelve al inicio | Aprobado |
+
+Se inspeccionaron las capturas de la portada de escritorio y de la revisión móvil: textos legibles, campos alineados y sin recortes. No se utilizó un proveedor de IA en las pruebas.
+
+## PostgreSQL 17 aislado
+
+Instalación de `supabase/setup.sql` y ejecución de `tests/database.sql` en contenedor de prueba propio. Las entregas de prueba se revirtieron con ROLLBACK.
+
+| Caso | Resultado esperado | Estado |
+| --- | --- | --- |
+| DB-01 | RPC guarda participante, respuestas y preguntas | Aprobado |
+| DB-02 | Reintento idéntico no duplica; UUID con respuestas diferentes se rechaza | Aprobado |
+| DB-03 | `anon` no puede consultar entregas | Aprobado |
+| DB-04 | No permite INSERT directo, UPDATE ni DELETE de participantes | Aprobado |
+| DB-05 | Valida consentimiento y preguntas obligatorias en servidor | Aprobado |
+| DB-06 | Rechaza opciones inventadas, claves desconocidas y nombre nulo | Aprobado |
+| DB-07 | `authenticated` tampoco puede consultar entregas ajenas | Aprobado |
+| LIVE-01 | Entrega desde el navegador móvil al Supabase real del organizador y comprobante de guardado | Aprobado: e2e real, 1 prueba aprobada; sin API interceptada |
+
+Conexión real verificada después de corregir un protocolo repetido en `SUPABASE_URL`. La clave pública fue aceptada por la API. La llamada de validación devolvió HTTP 400 / 22023, y el intento de lectura directa de `workshop_responses` devolvió HTTP 401. Se creó una entrega claramente identificada como **PRUEBA TÉCNICA · conexión**, sin datos reales de participantes. Puede eliminarse desde el panel de Supabase. Evidencia de la prueba real: `.e2e/live/report.json` y captura `confirmacion-supabase-real` (ejecución con los mismos archivos en una carpeta temporal para evitar bloqueos de lectura de iCloud).
+
+Revisión final: preguntas y numeración cotejadas con los PDF; todas las interpolaciones de datos se escapan; acceso de participantes limitado a una función de inserción validada; claves privadas rechazadas; sin persistencia de datos personales en almacenamiento del navegador. Los reintentos no sobrescriben datos. El instructor usa Supabase Table Editor para consulta/exportación.

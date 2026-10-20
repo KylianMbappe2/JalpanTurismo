@@ -1,0 +1,17 @@
+{
+  "name": "aula-sierra-encuestas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": { "node": ">=22.22.3" },
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "e2e run",
+    "schema": "node scripts/schema.mjs"
+  },
+  "devDependencies": { "e2e": "0.21.2", "@e2e-dev/web": "0.15.2" },
+  "pnpm": { "onlyBuiltDependencies": [] }
+}
