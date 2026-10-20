@@ -53,7 +53,8 @@ test('TRACK-01: la matriz muestra quién entregó y quién no', async ({ app, sc
   await screen.getByRole('checkbox', 'Solo quienes no entregaron').check();
   await expect(screen.getByRole('row').filter({ hasText: 'María Bosque' })).toBeVisible();
   await expect(screen.getByRole('row').filter({ hasText: 'Luis Turismo' })).toBeHidden();
-  await expect(screen.getByRole('columnheader').filter({ hasText: 'Tu agente de IA' })).toContainText('entregaron 1 / faltan 1');
+  const totals = await browser.evaluate(() => innerWidth <= 767) ? screen.getByTestId('activity-totals') : screen.getByRole('columnheader').filter({ hasText: 'Tu agente de IA' });
+  await expect(totals).toContainText('entregaron 1 / faltan 1');
   const file = await browser.waitForDownload(() => screen.getByRole('button', 'Exportar seguimiento').tap());
   const csv = await readFile(file.absolutePath, 'utf8');
   await expect(csv).toContain('María Bosque');

@@ -24,7 +24,7 @@ export async function courseFixture(browser, options = {}) {
   const luisId = '10000000-0000-4000-8000-000000000002';
   const mariaId = '10000000-0000-4000-8000-000000000003';
   const role = options.instructor ? 'instructor' : 'student';
-  const profile = { user_id: ownId, username: options.instructor ? 'docente' : 'ana.sierra', full_name: options.instructor ? 'Docente Sierra' : 'Ana Sierra', email: '', business: '', phone: '', municipality: '' };
+  const profile = { user_id: ownId, username: options.instructor ? 'docente' : 'ana.sierra', full_name: options.instructor ? 'Docente Sierra' : 'Ana Sierra', email: '', business: '', phone: '', municipality: '', ...options.profile };
   const activities = forms.map((f, i) => ({ id: f.id, title: f.title, version: 1, position: i + 1, is_published: true, due_at: null, lock_after_due: false, editable: true, closed_reason: null }));
   if (options.closedForm) {
     const activity = activities.find(f => f.id === options.closedForm);
