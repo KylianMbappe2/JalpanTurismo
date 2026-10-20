@@ -31,7 +31,7 @@ export const forms = [
         text('w2', 2, 'Mensaje de ausencia y horario', 'Activa el mensaje de ausencia fuera del horario comercial y pon tu horario real en Editar perfil.'),
       ] },
       { title: 'Respuestas rápidas', description: 'En Herramientas → Respuestas rápidas, agrega cada mensaje y su atajo. En un chat, escribe / para probarlo.', questions: [
-        text('w3', 3, '/precios'), text('w4', 3, '/ubicacion'), text('w5', 3, '/horario'),
+        text('w3', 3, '/precios'), text('w4', 4, '/ubicacion'), text('w5', 5, '/horario'),
       ] },
       { title: 'Prueba', description: 'Pide a un compañero que te escriba y revisa qué recibe. Marca solo lo que ya terminaste.', questions: [
         check('w6', 'Bienvenida activa'), check('w7', 'Ausencia activa'), check('w8', 'Horario real en el perfil'), check('w9', '3 respuestas rápidas guardadas'), check('w10', 'Captura enviada al grupo'),

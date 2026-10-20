@@ -73,7 +73,27 @@ export function base64ToBlob(data, type) {
   return new Blob([bytes], { type });
 }
 
+// Comparamos lo que muestra el formulario, independientemente del orden de claves de jsonb.
+export function workFingerprint(payload) {
+  const form = forms.find(form => form.id === payload?.form_id);
+  const answers = payload?.answers ?? {};
+  return JSON.stringify([
+    payload?.id, payload?.form_id, payload?.version,
+    ['name', 'email', 'phone', 'business', 'municipality'].map(key => payload?.participant?.[key] ?? ''),
+    (form ? getQuestions(form) : []).map(q => [q.id, q.type === 'multi' ? [...(answers[q.id] ?? [])].sort() : answers[q.id] ?? (q.type === 'check' ? false : ''), extraFields[q.id] ? answers[extraFields[q.id].id] ?? '' : null]),
+    payload?.questions ?? '', payload?.consent === true,
+  ]);
+}
+
 export function createCourseData(auth) {
+  const completing = new Map();
+  async function recoverWork(payload, revision) {
+    const result = await auth.rpc('course_load');
+    return result?.work?.find(work => work.form_id === payload.form_id && work.payload?.id === payload.id
+      && workFingerprint(work.payload) === workFingerprint(payload)
+      && Number.isInteger(work.revision) && work.revision >= revision);
+  }
+  const uncertain = error => !error.status || error.status >= 500;
   return {
     async load() {
       const result = await auth.rpc('course_load');
@@ -81,14 +101,54 @@ export function createCourseData(auth) {
       return { context: { role: result.role, profile: result.profile }, activities: result.activities, work: result.work, files: Array.isArray(result.files) ? result.files : [] };
     },
     async save(payload, step, revision) {
-      const work = await auth.rpc('course_save', { p_payload: payload, p_step: step, p_revision: revision });
-      if (work?.form_id !== payload.form_id || work?.payload?.id !== payload.id || !Number.isInteger(work.revision)) throw new Error('No recibimos la confirmación de guardado. Inténtalo otra vez.');
-      return work;
+      try {
+        const work = await auth.rpc('course_save', { p_payload: payload, p_step: step, p_revision: revision });
+        if (work?.form_id !== payload.form_id || work?.payload?.id !== payload.id || !Number.isInteger(work.revision)) throw new Error('No recibimos la confirmación de guardado. Inténtalo otra vez.');
+        return work;
+      } catch (error) {
+        if (uncertain(error)) {
+          try { const work = await recoverWork(payload, revision); if (work) return work; } catch { /* Conservamos el error original y las respuestas. */ }
+        }
+        throw error;
+      }
     },
     async complete(payload, revision) {
-      const result = await auth.rpc('course_complete', { p_payload: payload, p_revision: revision });
-      if (result?.id !== payload.id || result.saved !== true || result.work?.status !== 'submitted') throw new Error('No recibimos la confirmación de tu entrega. Inténtalo otra vez.');
-      return result;
+      const snapshot = structuredClone(payload);
+      // El folio se conserva en aula_work por usuario/actividad y en cada reintento.
+      const key = `${auth.user?.id}:${snapshot.form_id}:${snapshot.id}`;
+      const fingerprint = workFingerprint(snapshot);
+      if (completing.has(key)) {
+        const pending = completing.get(key);
+        if (pending.fingerprint !== fingerprint) throw new Error('Espera a que termine la entrega en curso.');
+        return pending.promise;
+      }
+      const confirm = async () => {
+        const result = await auth.rpc('course_complete', { p_payload: snapshot, p_revision: revision });
+        if (result?.id !== snapshot.id || result.saved !== true || result.work?.status !== 'submitted') throw new Error('No recibimos la confirmación de tu entrega. Inténtalo otra vez.');
+        return result;
+      };
+      const promise = (async () => {
+        try {
+          return await confirm();
+        } catch (error) {
+          if (uncertain(error)) {
+            try {
+              const result = await auth.rpc('course_load');
+              const work = result?.work?.find(work => work.form_id === snapshot.form_id && work.response_id === snapshot.id && work.status === 'submitted');
+              // aula_work puede contener un borrador posterior. Solo course_complete compara
+              // la entrega oficial y devuelve su recibo idempotente antes de revisar PT409.
+              // Conservamos la revisión ORIGINAL: nunca sobreescribimos el trabajo de otra pestaña.
+              if (work) return await confirm();
+            } catch (confirmationError) {
+              if (['PT401', 'PT403', 'PT409'].includes(confirmationError.code)) throw confirmationError;
+              // Una consulta fallida nunca confirma una entrega; conservamos el error inicial.
+            }
+          }
+          throw error;
+        }
+      })();
+      completing.set(key, { fingerprint, promise });
+      try { return await promise; } finally { completing.delete(key); }
     },
     async instructor(offset = 0) {
       const result = await auth.rpc('course_instructor', { p_offset: offset });

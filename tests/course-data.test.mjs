@@ -47,6 +47,72 @@ test('completion does not treat a draft response as submitted', async () => {
   const api = createCourseData({ rpc: async () => ({ saved: true, id: 'x', work: { status: 'draft' } }) });
   await assert.rejects(api.complete({ id: 'x' }, 1), /confirmación/);
 });
+const delivery = { id: '20000000-0000-4000-8000-000000000099', form_id: 'agente-ia', version: 1, participant: { name: 'Ana' }, answers: { a2: 'A'.repeat(3000) }, questions: '', consent: true };
+test('a lost response recovers the official receipt with one idempotent retry', async () => {
+  let submits = 0;
+  const work = { form_id: delivery.form_id, payload: delivery, status: 'submitted', revision: 4, response_id: delivery.id, submitted_at: '2026-10-20T10:00:00Z' };
+  const api = createCourseData({ rpc: async name => {
+    if (name === 'course_complete') { submits++; if (submits === 1) throw new Error('offline'); return { id: delivery.id, saved: true, work }; }
+    if (name === 'course_load') return { work: [work] };
+    throw new Error('unexpected');
+  } });
+  assert.deepEqual(await api.complete(delivery, 2), { id: delivery.id, saved: true, work });
+  assert.equal(submits, 2);
+});
+test('a submitted work with only autosaved edits must not count as a confirmed updated delivery', async () => {
+  const original = new Error('offline');
+  const work = { form_id: delivery.form_id, payload: delivery, status: 'submitted', revision: 2, response_id: delivery.id };
+  const api = createCourseData({ rpc: async name => { if (name === 'course_complete') throw original; return { work: [work] }; } });
+  await assert.rejects(api.complete(delivery, 2), error => error === original);
+});
+test('a concurrent autosave never substitutes the official receipt or bypasses the original revision', async () => {
+  const original = new Error('offline');
+  const conflict = Object.assign(new Error('conflict'), { code: 'PT409', status: 409 });
+  const work = { form_id: delivery.form_id, payload: delivery, status: 'submitted', revision: 4, response_id: delivery.id, submitted_at: '2026-10-20T08:00:00Z', resubmitted_at: '2026-10-20T10:00:00Z' };
+  let calls = 0;
+  const api = createCourseData({ rpc: async (name, body) => {
+    if (name === 'course_load') return { work: [work] };
+    calls++;
+    assert.equal(body.p_revision, 2);
+    assert.deepEqual(body.p_payload, delivery);
+    throw calls === 1 ? original : conflict;
+  } });
+  await assert.rejects(api.complete(delivery, 2), error => error === conflict);
+  assert.equal(calls, 2);
+});
+test('a lost idempotent receipt confirms existing unchanged content without requiring a new revision', async () => {
+  let calls = 0;
+  const work = { form_id: delivery.form_id, payload: delivery, status: 'submitted', revision: 2, response_id: delivery.id };
+  const api = createCourseData({ rpc: async name => {
+    if (name === 'course_load') return { work: [work] };
+    if (++calls === 1) throw new Error('offline');
+    return { id: delivery.id, saved: true, work };
+  } });
+  assert.equal((await api.complete(delivery, 2)).work.revision, 2);
+  assert.equal(calls, 2);
+});
+test('a receipt for different content or a different folio cannot confirm this delivery', async () => {
+  for (const change of [{ answers: { a2: 'old content' } }, { id: 'another-folio' }]) {
+    const original = new Error('offline');
+    const api = createCourseData({ rpc: async name => {
+      if (name === 'course_complete') throw original;
+      return { work: [{ form_id: delivery.form_id, payload: { ...delivery, ...change }, status: 'submitted', revision: 4, response_id: delivery.id }] };
+    } });
+    await assert.rejects(api.complete(delivery, 2), error => error === original);
+  }
+});
+test('concurrent delivery calls share one request for the same user, activity and folio', async () => {
+  let submits = 0;
+  let finish;
+  const pending = new Promise(resolve => { finish = resolve; });
+  const work = { form_id: delivery.form_id, payload: delivery, status: 'submitted', revision: 4, response_id: delivery.id };
+  const api = createCourseData({ user: { id: 'student-1' }, rpc: async () => { submits++; await pending; return { id: delivery.id, saved: true, work }; } });
+  const first = api.complete(delivery, 2);
+  const second = api.complete(structuredClone(delivery), 2);
+  finish();
+  assert.deepEqual(await first, await second);
+  assert.equal(submits, 1);
+});
 test('tracking rejects a payload that is not a matrix', async () => {
   const api = createCourseData({ rpc: async () => ({ students: [] }) });
   await assert.rejects(api.tracking(), /seguimiento/);

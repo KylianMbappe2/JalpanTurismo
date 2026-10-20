@@ -26,6 +26,20 @@ test('wrong PIN has a Spanish error and does not authenticate', async () => {
   await assert.rejects(auth.signIn('ana.sierra', '0000'), /Usuario o PIN incorrectos/);
   assert.equal(auth.user, null);
 });
+test('an HTTP credential rejection uses the same error as an unknown username', async () => {
+  const auth = createAuth(config, async () => Response.json({ code: 'PT401' }, { status: 401 }));
+  await assert.rejects(auth.signIn(' TEST123 ', '0000'), /Usuario o PIN incorrectos/);
+  assert.equal(auth.user, null);
+});
+test('saving and submitting allow at least 30 seconds for the real response', async t => {
+  const durations = [];
+  t.mock.method(AbortSignal, 'timeout', ms => { durations.push(ms); return new AbortController().signal; });
+  const auth = createAuth(config, async url => Response.json(url.endsWith('/course_login') ? granted : {}));
+  await auth.signIn('ana.sierra', '1234');
+  await auth.rpc('course_save');
+  await auth.rpc('course_complete');
+  assert.ok(durations.slice(1).every(ms => ms >= 30000));
+});
 test('locked accounts explain the wait and the instructor reset', async () => {
   const auth = createAuth(config, async () => Response.json({ ok: false, error: 'locked', retry_after: 600 }));
   await assert.rejects(auth.signIn('ana.sierra', '0000'), /Espera 10 minutos o pide al instructor/);

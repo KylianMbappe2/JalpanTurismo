@@ -55,22 +55,38 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     return loading;
   }
 
-  const pinField = (id, label, autocomplete, hint = '') => `<div class="field"><label for="${id}">${label}</label><div class="password-field"><input type="password" id="${id}" name="${id === 'auth-pin' ? 'pin' : 'pin2'}" inputmode="numeric" pattern="[0-9]{4,6}" minlength="4" maxlength="6" autocomplete="${autocomplete}" placeholder="••••" required><button type="button" class="text-button" data-course-action="show-password" data-target="${id}" aria-pressed="false">Mostrar</button></div>${hint ? `<span class="field-hint">${hint}</span>` : ''}</div>`;
+  const pinField = (id, label, autocomplete, hint = '') => `<div class="field"><label for="${id}">${label}</label><div class="password-field"><input type="password" id="${id}" name="${id === 'auth-pin' ? 'pin' : 'pin2'}" inputmode="numeric" pattern="[0-9]{4,6}" minlength="4" maxlength="6" autocomplete="${autocomplete}" placeholder="••••" aria-describedby="${id}-limit" required><button type="button" class="text-button" data-course-action="show-password" data-target="${id}" aria-pressed="false">Mostrar</button></div><span class="field-hint input-limit" id="${id}-limit" data-limit-for="${id}" aria-live="polite">0/6 · máximo 6 números</span>${hint ? `<span class="field-hint">${hint}</span>` : ''}</div>`;
 
   function showAuth(mode = 'login', message = '') {
     header();
     const signup = mode === 'registro';
-    main.innerHTML = `<section class="auth-layout page-width"><div class="auth-story"><p class="eyebrow">AULA SIERRA · ESPACIO DEL CURSO</p><h1>Aprende algo nuevo.<br><em>Haz crecer lo tuyo.</em></h1><p>Tu experiencia y la inteligencia artificial pueden hacer un gran equipo. Aquí tienes un lugar para ponerlo en práctica.</p><img src="/landscape.svg" width="560" height="350" alt="Montañas y una cabaña de la Sierra Gorda"><div class="auth-story-foot"><span>5 actividades prácticas</span><span>Tu avance, guardado</span></div></div><div class="auth-panel"><div class="auth-tabs"><a href="#login" ${!signup ? 'aria-current="page"' : ''}>Iniciar sesión</a><a href="#registro" ${signup ? 'aria-current="page"' : ''}>Crear cuenta</a></div><p class="eyebrow">${signup ? 'BIENVENIDO AL CURSO' : 'CONTINÚA DONDE TE QUEDASTE'}</p><h2>${signup ? 'Tu próxima idea empieza aquí.' : 'Qué gusto tenerte de vuelta.'}</h2><p class="auth-description">${signup ? 'Elige un nombre de usuario y un PIN para guardar tus actividades y consultar tu avance.' : 'Entra con tu usuario y tu PIN para retomar tus actividades.'}</p><form id="course-auth" data-mode="${mode}" novalidate>${signup ? '<div class="field"><label for="auth-name">Nombre completo</label><input id="auth-name" name="name" autocomplete="name" maxlength="120" placeholder="Tu nombre y apellido" required></div>' : ''}<div class="field"><label for="auth-username">Nombre de usuario</label><input id="auth-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" placeholder="Ej. ana.sierra" required>${signup ? '<span class="field-hint">De 3 a 30 caracteres: letras sin acentos, números, punto o guion.</span>' : ''}</div>${pinField('auth-pin', 'PIN', signup ? 'new-password' : 'current-password', signup ? 'De 4 a 6 números. Anótalo: lo necesitarás para volver a entrar.' : '')}${signup ? pinField('auth-pin2', 'Repite tu PIN', 'new-password') : '<p class="field-hint pin-help">¿Olvidaste tu PIN? Pide al instructor que lo restablezca.</p>'}${signup ? '<label class="check-line auth-consent"><input type="checkbox" name="consent" required><span>Acepto que se guarden mis datos y actividades para participar en el curso. <button type="button" class="text-button" data-action="privacy">Ver privacidad</button></span></label>' : ''}<p class="form-error" id="auth-error" role="alert">${e(message)}</p><button class="button primary auth-submit">${signup ? 'Crear mi cuenta' : 'Entrar a mi curso'} ${icon('arrow')}</button></form><p class="auth-footer-note">${icon('lock')} Cada participante tiene su propio espacio.</p></div></section>`;
-    document.querySelector('#course-auth').addEventListener('submit', submitAuth);
+    main.innerHTML = `<section class="auth-layout page-width"><div class="auth-story"><p class="eyebrow">AULA SIERRA · ESPACIO DEL CURSO</p><h1>Aprende algo nuevo.<br><em>Haz crecer lo tuyo.</em></h1><p>Tu experiencia y la inteligencia artificial pueden hacer un gran equipo. Aquí tienes un lugar para ponerlo en práctica.</p><img src="/landscape.svg" width="560" height="350" alt="Montañas y una cabaña de la Sierra Gorda"><div class="auth-story-foot"><span>5 actividades prácticas</span><span>Tu avance, guardado</span></div></div><div class="auth-panel"><div class="auth-tabs"><a href="#login" ${!signup ? 'aria-current="page"' : ''}>Iniciar sesión</a><a href="#registro" ${signup ? 'aria-current="page"' : ''}>Crear cuenta</a></div><p class="eyebrow">${signup ? 'BIENVENIDO AL CURSO' : 'CONTINÚA DONDE TE QUEDASTE'}</p><h2>${signup ? 'Tu próxima idea empieza aquí.' : 'Qué gusto tenerte de vuelta.'}</h2><p class="auth-description">${signup ? 'Elige un nombre de usuario y un PIN para guardar tus actividades y consultar tu avance.' : 'Entra con tu usuario y tu PIN para retomar tus actividades.'}</p><form id="course-auth" data-mode="${mode}" novalidate>${signup ? '<div class="field"><label for="auth-name">Nombre completo</label><input id="auth-name" name="name" autocomplete="name" maxlength="120" placeholder="Tu nombre y apellido" required></div>' : ''}<div class="field"><label for="auth-username">Nombre de usuario</label><input id="auth-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" placeholder="Ej. ana.sierra" aria-describedby="auth-username-limit" required><span class="field-hint input-limit" id="auth-username-limit" data-limit-for="auth-username" aria-live="polite">0/30 · máximo 30 caracteres</span>${signup ? '<span class="field-hint">De 3 a 30 caracteres: letras sin acentos, números, punto, guion o guion bajo.</span>' : ''}</div>${pinField('auth-pin', 'PIN', signup ? 'new-password' : 'current-password', signup ? 'De 4 a 6 números. Anótalo: lo necesitarás para volver a entrar.' : '')}${signup ? pinField('auth-pin2', 'Repite tu PIN', 'new-password') : '<p class="field-hint pin-help">¿Olvidaste tu PIN? Pide al instructor que lo restablezca.</p>'}${signup ? '<label class="check-line auth-consent"><input type="checkbox" name="consent" required><span>Acepto que se guarden mis datos y actividades para participar en el curso. <button type="button" class="text-button" data-action="privacy">Ver privacidad</button></span></label>' : ''}<p class="form-error" id="auth-error" role="alert">${e(message)}</p><button class="button primary auth-submit">${signup ? 'Crear mi cuenta' : 'Entrar a mi curso'} ${icon('arrow')}</button></form><p class="auth-footer-note">${icon('lock')} Cada participante tiene su propio espacio.</p></div></section>`;
+    const authForm = document.querySelector('#course-auth');
+    authForm.addEventListener('submit', submitAuth);
+    authForm.addEventListener('input', updateLimits);
+    authForm.addEventListener('change', updateLimits);
+    updateLimits();
+  }
+
+  function updateLimits() {
+    document.querySelectorAll('[data-limit-for]').forEach(counter => {
+      const input = document.getElementById(counter.dataset.limitFor);
+      const length = input.value.length;
+      const max = input.maxLength;
+      counter.textContent = `${length}/${max} · ${length >= max ? 'Límite alcanzado' : `máximo ${max} ${input.name === 'username' ? 'caracteres' : 'números'}`}`;
+    });
   }
 
   async function submitAuth(event) {
     event.preventDefault();
     const form = event.currentTarget;
+    if (form.dataset.submitting === 'true') return;
     const signup = form.dataset.mode === 'registro';
     const fields = new FormData(form);
     const name = String(fields.get('name') ?? '').trim();
     const username = normalizeUsername(fields.get('username'));
+    form.elements.username.value = username;
+    updateLimits();
     const pin = String(fields.get('pin') ?? '');
     const errorBox = document.querySelector('#auth-error');
     const problem = signup
@@ -78,6 +94,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       : !username || !pin ? 'Escribe tu usuario y tu PIN.' : '';
     if (problem) { errorBox.textContent = problem; return; }
     const button = form.querySelector('button.auth-submit');
+    form.dataset.submitting = 'true';
     button.disabled = true; button.textContent = 'Un momento…'; errorBox.textContent = '';
     try {
       if (signup) await auth.signUp(name, username, pin); else await auth.signIn(username, pin);
@@ -86,7 +103,9 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     } catch (error) {
       errorBox.textContent = error.message;
       form.querySelectorAll('input[type="password"], input[name="pin"], input[name="pin2"]').forEach(input => { input.value = ''; });
+      updateLimits();
     } finally {
+      delete form.dataset.submitting;
       if (button.isConnected) { button.disabled = false; button.innerHTML = `${signup ? 'Crear mi cuenta' : 'Entrar a mi curso'} ${icon('arrow')}`; }
     }
   }
@@ -189,6 +208,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     const ticket = ++viewGeneration;
     if (!auth.user) {
       if (hash === '#docente') loginDestination = '#docente';
+      if (!['', '#', '#login', '#registro'].includes(hash)) history.replaceState(null, '', '#login');
       return showAuth(hash === '#registro' ? 'registro' : 'login');
     }
     try {
@@ -207,7 +227,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       studentDashboard();
     } catch (error) {
       if (ticket !== viewGeneration) return;
-      if (!auth.user) { loaded = null; teacher = null; return showAuth('login', error.message); }
+      if (!auth.user) { loaded = null; teacher = null; history.replaceState(null, '', '#login'); return showAuth('login', error.message); }
       main.innerHTML = `<section class="account-message page-width"><p class="eyebrow">TU ESPACIO DEL CURSO</p><h1>No pudimos cargar tu curso.</h1><p role="alert">${e(error.message)}</p><button class="button primary" data-course-action="refresh">Volver a intentar</button><button class="button secondary" data-course-action="logout">Cerrar sesión</button></section>`;
     }
   }

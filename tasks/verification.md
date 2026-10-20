@@ -1,5 +1,42 @@
 # Verificación · entregas editables y seguimiento · 20 de octubre de 2026 UTC
 
+## Correcciones de guardado, acceso y navegación
+
+Versión verificada con e2e 0.21.2 en Chromium de escritorio y móvil. Se conservan diseño, validaciones, escape de HTML, permisos SQL, revisión optimista y bloqueo por intentos de PIN. No requiere instalar SQL nuevo.
+
+| Caso | Estado | Evidencia |
+| --- | --- | --- |
+| Registro | Aprobado | AUTH-02 y STACK-01; LIVE-01 crea una cuenta marcada PRUEBA TÉCNICA en Supabase |
+| Login correcto | Aprobado | AUTH-01, STACK-01 y LIVE-01; incluye usuario con mayúsculas |
+| Login incorrecto / desconocido | Aprobado | BUG-LOGIN, unitarias de HTTP 401 y STACK-LOCK; mismo mensaje sin revelar existencia |
+| Bloqueo de PIN | Aprobado | STACK-LOCK: cinco rechazos incrementan el contador; el sexto intento recibe locked, incluso con PIN correcto |
+| Entregar 3000 caracteres | Aprobado | BUG-SUBMIT, STACK-BUGS y LIVE-01; una sola fila oficial |
+| Esperar una respuesta lenta | Aprobado | BUG-SLOW: demora de transporte de 20 segundos, spinner y botón desactivado; llega el folio sin error falso |
+| Doble clic | Aprobado | BUG-SUBMIT: una petición normal de entrega y una fila; estado en curso compartido por usuario/actividad/folio |
+| Respuesta perdida tras commit | Aprobado | BUG-SUBMIT y STACK-BUGS: consulta y confirmación idempotente con el payload, folio y revisión originales; una fila y solo una versión por edición |
+| Borrador posterior / dos pestañas | Aprobado | Unitarias: nunca se confirma solo por aula_work; el recibo oficial decide, se conserva PT409 y se acepta el recibo idempotente sin revisión nueva |
+| Cambios pendientes falsos | Aprobado | BUG-DIRTY: abrir entrega, input idéntico y deshacer cambios no modifican revisión ni dejan aviso pendiente |
+| Rutas sin sesión | Aprobado | BUG-ROUTES: #curso y #actividad/agente-ia muestran acceso y reemplazan URL por #login |
+| Actividad inexistente con sesión | Aprobado | BUG-ROUTES: Actividad no encontrada y Volver a mi curso |
+| Menú inicial / logo / pie | Aprobado | BUG-NAV: sin enlaces vacíos ni #como-funciona; marcas apuntan a / |
+| Numeración WhatsApp | Aprobado | BUG-NUMBER: /precios, /ubicacion y /horario llevan 3, 4 y 5 |
+| Ayuda y límites | Aprobado | BUG-LIMITS: guion bajo y contadores 30/30 y 6/6; aviso Límite alcanzado |
+| Privacidad | Aprobado | BUG-PRIVACY: el diálogo se cierra al cambiar el hash |
+| Regresión general | Aprobado | 76/76, ejecución 01a1594a-5e16-739e-a1f9-21c3593d93cb; .e2e/bugs-final/report.json |
+| PostgreSQL 17 + PostgREST v12.2.3 | Aprobado | 6/6, ejecución 01a1594a-624f-7f71-8487-523ce185f6a6; .e2e/bugs-stack-final/report.json |
+| SQL aislado | Aprobado | tests/course-database.sql sobre aula_bugfix_20261020: P01–P07, C01–C25, F01–F08 y E01–E09; rollback al terminar |
+| Supabase real | Aprobado | 2/2, ejecución 01a15947-b03d-70e8-ad9a-5c1a176a445a; .e2e/bugs-live-configured/report.json |
+| Ajuste visual de contadores | Aprobado | 2/2, ejecución 01a1594b-d160-74d7-a5bf-51d754d32d7f; .e2e/bugs-limits-final/report.json |
+| Unitarias y compilación | Aprobado | pnpm test: 39/39; pnpm build y comprobación de sintaxis correctas |
+
+Diagnóstico: todas las RPC tenían un timeout de 18 segundos. Se amplió a 60 segundos. Entregar además hacía course_save y luego course_complete con el mismo contenido; ahora espera solo un autoguardado ya iniciado y deja que course_complete guarde y entregue en su transacción. Tras una respuesta incierta se consulta course_load y, si existe el folio entregado, se confirma con un único reintento idempotente de course_complete. Este último compara workshop_responses, conserva la revisión original y evita confundir un borrador posterior con una entrega. No se ignoran conflictos, cierres ni sesiones vencidas.
+
+Mediciones: payload de 3349 bytes para la entrega sintética de 3000 caracteres; RPC local de entrega/confirmación entre 6 y 11 ms en la ejecución final. En Supabase real course_complete tardó 144 ms (tiempo de recurso del navegador) y course_save 100 ms. No se reprodujo una consulta de 15–20 segundos ni hay evidencia para atribuirla a una función fría o a un payload grande. El login de TEST123 inexistente devolvió invalid_credentials en 974 ms en una consulta real de diagnóstico. La cuenta live nueva se llama prueba.tecnica.mvgnrgcm y contiene únicamente información técnica.
+
+Evidencia inicial: antes de corregir fallaron cinco reproducciones móviles (dirty, ambas rutas, privacidad y respuesta perdida), ejecución 01a1593f-e3f9-703a-92cd-5ff84e68fcb5. Una primera prueba live quedó bloqueada por configuración ausente en el servidor temporal de pruebas; se corrigió el entorno sin cambiar la app y la ejecución real posterior pasó. La revisión independiente detectó y resolvió dos riesgos de confirmación basada solo en borradores antes de la ejecución final.
+
+La primera ejecución SQL sobre la base de los e2e falló en E02 porque esa aserción cuenta todas las entregas del docente y presupone una base vacía; la base ya contenía entregas de las pruebas anteriores. Se instaló el esquema sin modificaciones en una base nueva y aislada y pasó el archivo completo. No se borraron trabajos para hacer pasar la prueba.
+
 ## Panel docente · trabajos entregados
 
 | Caso | Estado y resultado |

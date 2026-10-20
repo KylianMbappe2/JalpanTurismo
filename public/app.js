@@ -1,7 +1,7 @@
 import { forms, extraFields, getQuestions } from './forms.js';
 import { validateSubmission, isConfigured } from './submission.js';
 import { createCourse } from './course.js';
-import { fileLimits, fileAccept, fileType, formatSize, activityOpen, closedReason } from './course-data.js';
+import { fileLimits, fileAccept, fileType, formatSize, activityOpen, closedReason, workFingerprint } from './course-data.js';
 
 const main = document.querySelector('main');
 const dialog = document.querySelector('#info-dialog');
@@ -21,11 +21,11 @@ const paths = {
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] ?? paths.spark}</svg>`;
 let config = {};
 try { const response = await fetch('/config.json', { cache: 'no-store' }); if (response.ok) config = await response.json(); } catch { /* The unavailable state remains explicit at submission. */ }
-const emptyState = () => ({ form: null, step: 1, participant: { name: '', email: '', phone: '', business: '', municipality: '' }, answers: {}, questions: '', consent: false, id: '', receipt: null, busy: false, errors: {}, revision: 0, dirty: false, savePromise: null, savedAt: null, saveError: '', submitted: false, locked: false, lockReason: '' });
+const emptyState = () => ({ form: null, step: 1, participant: { name: '', email: '', phone: '', business: '', municipality: '' }, answers: {}, questions: '', consent: false, id: '', receipt: null, busy: false, errors: {}, revision: 0, dirty: false, savePromise: null, deliverPromise: null, savedFingerprint: null, savedAt: null, saveError: '', submitted: false, locked: false, lockReason: '' });
 let state = emptyState();
 let saveTimer;
 let routeGeneration = 0;
-const course = createCourse({ config, main, icon, navigate, beforeSignOut: async () => { if (state.form && !state.locked && (state.dirty || state.savePromise)) await saveDraft(); state = emptyState(); clearTimeout(saveTimer); } });
+const course = createCourse({ config, main, icon, navigate, beforeSignOut: async () => { if (state.deliverPromise) await state.deliverPromise; if (state.form && !state.locked && (state.dirty || state.savePromise)) await saveDraft(); state = emptyState(); clearTimeout(saveTimer); } });
 
 function navigate(hash) { if (location.hash === hash) route(); else location.hash = hash; }
 
@@ -35,18 +35,19 @@ function saveStatus(message, error = false) {
 }
 
 function scheduleSave() {
-  if (!state.form || state.locked) return;
-  state.dirty = true;
+  if (!state.form || state.locked || state.busy) return;
+  state.dirty = workFingerprint(payload()) !== state.savedFingerprint;
   state.saveError = '';
-  saveStatus('Cambios pendientes de guardar');
+  saveStatus(state.savePromise ? 'Guardando tu avance…' : state.dirty ? 'Cambios pendientes de guardar' : 'Avance guardado en tu cuenta ✓');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => saveDraft().catch(() => {}), 900);
+  if (state.dirty) saveTimer = setTimeout(() => saveDraft().catch(() => {}), 900);
 }
 
 async function saveDraft() {
   clearTimeout(saveTimer);
   if (!state.form || state.locked || !course.user) return;
   const current = state;
+  if (current.deliverPromise) return current.deliverPromise;
   if (current.savePromise) { await current.savePromise; if (current.dirty) return saveDraft(); return; }
   if (!current.dirty && current.revision > 0) return;
   const snapshot = structuredClone(payload());
@@ -58,10 +59,12 @@ async function saveDraft() {
       const work = await course.save(snapshot, step, current.revision);
       current.revision = work.revision;
       current.savedAt = work.saved_at;
+      current.savedFingerprint = workFingerprint(snapshot);
+      current.dirty = workFingerprint(payload()) !== current.savedFingerprint;
       current.saveError = '';
       if (state === current) saveStatus(current.dirty ? 'Cambios pendientes de guardar' : 'Avance guardado en tu cuenta ✓');
     } catch (error) {
-      current.dirty = true;
+      current.dirty = workFingerprint(payload()) !== current.savedFingerprint;
       current.saveError = error.message;
       if (state === current) saveStatus(`No se pudo guardar. ${error.message}`, true);
       throw error;
@@ -156,12 +159,12 @@ function sheetContent() {
       ? `<div class="notice edit-notice"><span>Ya entregaste; los cambios actualizan tu entrega</span>. Folio: <code>${escape(state.id)}</code></div>`
       : '';
   const consent = state.locked ? '' : `<section class="consent-section"><label class="check-line"><input type="checkbox" name="consent" ${state.consent ? 'checked' : ''}><span>Autorizo que el equipo del taller guarde mis datos y respuestas para dar seguimiento a esta actividad.</span></label><button type="button" class="text-button" data-action="privacy">Leer aviso de privacidad</button><span class="field-error">${escape(state.errors.consent ?? '')}</span></section>${isConfigured(config) ? '' : '<div class="notice">El formulario todavía no está habilitado para recibir entregas. Puedes revisar y descargar tus respuestas; solicita al instructor que habilite el envío.</div>'}`;
-  return `${notice}<fieldset class="activity-sheet" ${state.locked ? 'disabled' : ''}><details class="profile-fold" open><summary>Tus datos</summary><p class="intro">Estos datos identifican tu entrega. Puedes plegarlos para ir a las preguntas.</p><p class="required-note">Los campos con * son obligatorios.</p><div class="fields-grid">${field('name', 'Nombre completo', { required: true, placeholder: 'Como te gustaría que te llamemos', autocomplete: 'name' })}${field('business', 'Nombre de tu negocio', { placeholder: 'Tu negocio o emprendimiento', autocomplete: 'organization' })}${field('email', 'Correo electrónico', { type: 'email', placeholder: 'tu@correo.com', autocomplete: 'email' })}${field('phone', 'Teléfono / WhatsApp', { type: 'tel', placeholder: 'Ej. 441 123 4567', autocomplete: 'tel' })}${field('municipality', 'Municipio', { placeholder: 'Ej. Jalpan de Serra', autocomplete: 'address-level2' })}</div></details>${answersContent()}${consent}</fieldset>`;
+  return `${notice}<fieldset class="activity-sheet" ${state.locked || state.busy ? 'disabled' : ''}><details class="profile-fold" open><summary>Tus datos</summary><p class="intro">Estos datos identifican tu entrega. Puedes plegarlos para ir a las preguntas.</p><p class="required-note">Los campos con * son obligatorios.</p><div class="fields-grid">${field('name', 'Nombre completo', { required: true, placeholder: 'Como te gustaría que te llamemos', autocomplete: 'name' })}${field('business', 'Nombre de tu negocio', { placeholder: 'Tu negocio o emprendimiento', autocomplete: 'organization' })}${field('email', 'Correo electrónico', { type: 'email', placeholder: 'tu@correo.com', autocomplete: 'email' })}${field('phone', 'Teléfono / WhatsApp', { type: 'tel', placeholder: 'Ej. 441 123 4567', autocomplete: 'tel' })}${field('municipality', 'Municipio', { placeholder: 'Ej. Jalpan de Serra', autocomplete: 'address-level2' })}</div></details>${answersContent()}${consent}</fieldset>`;
 }
 
 function renderForm() {
   const deliverLabel = state.submitted ? 'Guardar cambios de la entrega' : 'Entregar';
-  main.innerHTML = `<div class="form-layout page-width"><aside class="form-sidebar"><a class="back-link" href="#curso">← Volver a mi curso</a><div class="sidebar-title"><span class="activity-icon">${icon(state.form.icon)}</span><p class="eyebrow">ACTIVIDAD ${state.form.number}</p><h2>${state.form.title}</h2></div><div class="sidebar-note">${icon('lock')}<p>${state.locked ? 'Puedes consultar esta actividad y descargar una copia.' : 'Puedes guardar y retomar esta actividad desde tu cuenta.'}</p></div><button type="button" class="text-button draft-copy" data-action="download">Descargar una copia</button></aside><div class="form-panel"><form id="activity-form" novalidate><div class="form-content">${sheetContent()}<div id="form-error" role="alert" class="form-error">${escape(state.errors.submit ?? (Object.keys(state.errors).length ? 'Revisa los campos señalados para continuar.' : ''))}</div></div><div class="draft-save-bar"><span id="draft-status" role="status" aria-live="polite"></span>${state.locked ? '' : `<div class="draft-save-actions">${state.submitted ? '' : '<button type="button" class="text-button" data-action="save-draft">Guardar avance</button>'}<button type="button" class="button primary" data-action="deliver" ${state.busy || !isConfigured(config) ? 'disabled' : ''}>${state.busy ? 'Guardando tu entrega…' : `${deliverLabel} ${icon('check')}`}</button></div>`}</div></form></div></div>`;
+  main.innerHTML = `<div class="form-layout page-width"><aside class="form-sidebar"><a class="back-link" href="#curso">← Volver a mi curso</a><div class="sidebar-title"><span class="activity-icon">${icon(state.form.icon)}</span><p class="eyebrow">ACTIVIDAD ${state.form.number}</p><h2>${state.form.title}</h2></div><div class="sidebar-note">${icon('lock')}<p>${state.locked ? 'Puedes consultar esta actividad y descargar una copia.' : 'Puedes guardar y retomar esta actividad desde tu cuenta.'}</p></div><button type="button" class="text-button draft-copy" data-action="download">Descargar una copia</button></aside><div class="form-panel"><form id="activity-form" novalidate><div class="form-content">${sheetContent()}<div id="form-error" role="alert" class="form-error">${escape(state.errors.submit ?? (Object.keys(state.errors).length ? 'Revisa los campos señalados para continuar.' : ''))}</div></div><div class="draft-save-bar"><span id="draft-status" role="status" aria-live="polite"></span>${state.locked ? '' : `<div class="draft-save-actions">${state.submitted ? '' : `<button type="button" class="text-button" data-action="save-draft" ${state.busy ? 'disabled' : ''}>Guardar avance</button>`}<button type="button" class="button primary" data-action="deliver" ${state.busy || !isConfigured(config) ? 'disabled' : ''}>${state.busy ? '<span class="saving-spinner" aria-hidden="true"></span> Guardando tu entrega…' : `${deliverLabel} ${icon('check')}`}</button></div>`}</div></form></div></div>`;
   const form = document.querySelector('#activity-form');
   saveStatus(state.saveError ? `No se pudo guardar. ${state.saveError}` : state.savePromise ? 'Guardando tu avance…' : state.dirty ? 'Cambios pendientes de guardar' : state.savedAt ? 'Avance guardado en tu cuenta ✓' : state.locked ? state.lockReason : 'Tu avance se guardará en esta cuenta', !!state.saveError);
   form.addEventListener('input', capture);
@@ -171,7 +174,7 @@ function renderForm() {
 
 function capture(event) {
   const { name, type, value, checked } = event.target;
-  if (!name || state.locked) return;
+  if (!name || state.locked || state.busy) return;
   if (['name', 'email', 'phone', 'business', 'municipality'].includes(name)) state.participant[name] = value;
   else if (name === 'questions') state.questions = value;
   else if (name === 'consent') state.consent = checked;
@@ -199,21 +202,35 @@ async function deliver() {
     target?.focus(); target?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return;
   }
   const editing = state.submitted;
-  state.busy = true; renderForm();
+  const current = state;
+  const snapshot = structuredClone(payload());
+  clearTimeout(saveTimer);
+  current.busy = true; current.errors = {}; renderForm();
+  current.deliverPromise = (async () => {
+    // Esperamos solo un autoguardado que ya empezó. course_complete guarda y entrega atómicamente.
+    if (current.savePromise) await current.savePromise;
+    const receipt = await course.complete(snapshot, current.revision);
+    current.receipt = receipt;
+    current.revision = receipt.work.revision;
+    current.savedAt = receipt.work.saved_at;
+    current.savedFingerprint = workFingerprint(snapshot);
+    current.submitted = true;
+    current.dirty = false;
+    current.saveError = '';
+  })();
   try {
-    await saveDraft();
-    state.receipt = await course.complete(payload(), state.revision);
-    state.revision = state.receipt.work.revision;
-    state.savedAt = state.receipt.work.saved_at;
-    state.submitted = true;
-    state.dirty = false;
-    state.busy = false;
-    clearTimeout(saveTimer);
+    await current.deliverPromise;
+    current.busy = false;
+    if (state !== current) return;
     if (editing) { renderForm(); saveStatus('Tu entrega se actualizó.'); }
     else renderSuccess();
     focusMain();
-  }
-  catch (error) { state.busy = false; state.errors = { submit: error.message }; renderForm(); document.querySelector('#form-error').scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  } catch (error) {
+    current.busy = false;
+    if (state !== current) return;
+    current.errors = { submit: error.message }; renderForm();
+    document.querySelector('#form-error').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } finally { current.deliverPromise = null; }
 }
 
 function renderSuccess() {
@@ -257,7 +274,9 @@ document.addEventListener('click', async event => {
 
 async function route() {
   const ticket = ++routeGeneration;
+  if (dialog.open) dialog.close();
   try {
+    if (state.deliverPromise) await state.deliverPromise;
     if (state.form && !state.locked && (state.dirty || state.savePromise)) await saveDraft();
     if (ticket !== routeGeneration) return;
     const hash = location.hash;
@@ -266,7 +285,11 @@ async function route() {
       if (ticket !== routeGeneration) return;
       const id = hash.slice(11);
       const form = course.activity(id);
-      if (!form) { state = emptyState(); return await course.render('#curso'); }
+      if (!form) {
+        state = emptyState();
+        main.innerHTML = '<section class="account-message page-width"><h1>Actividad no encontrada</h1><p>Esta actividad no existe o no está disponible para tu cuenta.</p><a class="button primary" href="#curso">Volver a mi curso</a></section>';
+        focusMain(); return;
+      }
       const work = course.work(id);
       const person = course.profile ?? {};
       const profile = { name: person.full_name ?? '', email: person.email ?? '', phone: person.phone ?? '', business: person.business ?? '', municipality: person.municipality ?? '' };
@@ -275,6 +298,7 @@ async function route() {
       state.submitted = work?.status === 'submitted';
       state.locked = !activityOpen(form);
       state.lockReason = state.locked ? closedReason(form) : '';
+      state.savedFingerprint = work ? workFingerprint(payload()) : null;
       renderForm();
       if (!work && !state.locked) scheduleSave();
       focusMain(); return;
@@ -304,6 +328,6 @@ document.addEventListener('change', async event => {
   } catch (error) { if (state.form?.id === formId) refreshFiles(`No se pudo subir. ${error.message}`, true); }
 });
 window.addEventListener('hashchange', route);
-window.addEventListener('beforeunload', event => { if (state.dirty || state.savePromise) event.preventDefault(); });
+window.addEventListener('beforeunload', event => { if (state.dirty || state.savePromise || state.deliverPromise) event.preventDefault(); });
 await course.initialize();
 await route();

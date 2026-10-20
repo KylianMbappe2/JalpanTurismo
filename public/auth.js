@@ -37,12 +37,13 @@ export function createAuth(config, fetcher = fetch) {
     const headers = { apikey: config.supabaseKey, 'Content-Type': 'application/json' };
     if (!config.supabaseKey.startsWith('sb_publishable_')) headers.Authorization = `Bearer ${config.supabaseKey}`;
     let response;
-    try { response = await fetcher(`${base}/rest/v1/rpc/${name}`, { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(18000) }); }
+    try { response = await fetcher(`${base}/rest/v1/rpc/${name}`, { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) }); }
     catch { throw new CourseError('No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'); }
     let result = null;
     try { result = await response.json(); } catch { /* Algunas respuestas no traen cuerpo. */ }
     if (!response.ok) {
       const code = result?.code ?? '';
+      if (name === 'course_login' && [400, 401, 422].includes(response.status)) throw new CourseError(accessErrors.invalid_credentials, response.status, 'invalid_credentials');
       const messages = {
         PT401: 'Tu sesión terminó. Vuelve a entrar con tu usuario y PIN.',
         PT409: 'Hay una versión más reciente de esta actividad. Descarga tu copia y vuelve a abrirla antes de continuar.',
@@ -59,11 +60,11 @@ export function createAuth(config, fetcher = fetch) {
     return result;
   }
 
-  function install(result, ticket) {
+  function install(result, ticket, signup = false) {
     if (generation !== ticket) throw new CourseError('Vuelve a iniciar sesión.', 401);
     if (result?.ok !== true) {
       if (result?.error === 'locked') throw new CourseError(`Demasiados intentos. Espera ${Math.max(1, Math.ceil(Number(result.retry_after ?? 900) / 60))} minutos o pide al instructor que restablezca tu PIN.`, 429, 'locked');
-      throw new CourseError(accessErrors[result?.error] ?? 'No pudimos confirmar tu acceso. Inténtalo otra vez.', 400, result?.error ?? '');
+      throw new CourseError(signup ? accessErrors[result?.error] ?? 'No pudimos confirmar tu acceso. Inténtalo otra vez.' : accessErrors.invalid_credentials, 400, result?.error ?? '');
     }
     if (!/^[0-9a-f]{64}$/.test(result.token ?? '') || !result.user?.id) throw new CourseError('No pudimos confirmar tu acceso. Inténtalo otra vez.');
     session = { token: result.token, user: { id: result.user.id, username: result.user.username } };
@@ -83,7 +84,7 @@ export function createAuth(config, fetcher = fetch) {
     async signUp(name, username, pin) {
       const ticket = ++generation;
       session = null; writeStored(null);
-      return install(await request('course_register', { p_username: normalizeUsername(username), p_full_name: name.trim(), p_pin: String(pin) }), ticket);
+      return install(await request('course_register', { p_username: normalizeUsername(username), p_full_name: name.trim(), p_pin: String(pin) }), ticket, true);
     },
     async rpc(name, body = {}) {
       if (!session) throw new CourseError('Debes iniciar sesión para continuar.', 401);

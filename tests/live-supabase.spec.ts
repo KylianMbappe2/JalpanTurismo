@@ -5,6 +5,7 @@ import { expect } from 'e2e';
 const suffix = Date.now().toString(36);
 const username = `prueba.tecnica.${suffix}`;
 const pin = String(Math.floor(100000 + Math.random() * 900000));
+const longAnswer = 'PRUEBA TÉCNICA · conexión con 3000 caracteres. '.padEnd(3000, 'A');
 
 test('LIVE-01: usuario y PIN, borrador, archivo y entrega en el Supabase real', async ({ app, screen, browser }) => {
   await app.open('/#registro');
@@ -17,16 +18,16 @@ test('LIVE-01: usuario y PIN, borrador, archivo y entrega en el Supabase real', 
   await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
   await screen.getByRole('row').filter({ hasText: 'Tu agente de IA' }).getByRole('link', 'Comenzar').tap();
   await screen.getByLabel(/Nombre de tu negocio/).fill('Registro de verificación de Aula Sierra');
-  await screen.getByTestId('question-a2').getByRole('textbox').fill('Prueba de conexión, sin datos de participantes');
+  await screen.getByTestId('question-a2').getByRole('textbox').fill(longAnswer);
   await screen.getByLabel(/Agregar archivo/).setInputFiles(['tests/files/plan-de-negocio.pdf']);
   await expect(screen.getByRole('status').filter({ hasText: 'Archivo guardado' })).toContainText('plan-de-negocio.pdf');
   await screen.getByRole('button', 'Guardar avance').tap();
   await expect(screen.getByText('Avance guardado en tu cuenta ✓')).toBeVisible();
   await browser.reload();
-  await expect(screen.getByTestId('question-a2').getByRole('textbox')).toHaveValue('Prueba de conexión, sin datos de participantes');
+  await expect(screen.getByTestId('question-a2').getByRole('textbox')).toHaveValue(longAnswer);
   await screen.getByRole('link', '← Volver a mi curso', { exact: true }).tap();
   await screen.getByRole('button', 'Salir', { exact: true }).tap();
-  await screen.getByLabel('Nombre de usuario', { exact: true }).fill(username);
+  await screen.getByLabel('Nombre de usuario', { exact: true }).fill(username.toUpperCase());
   await screen.getByLabel('PIN', { exact: true }).fill(pin);
   await screen.getByRole('button', 'Entrar a mi curso').tap();
   await screen.getByRole('row').filter({ hasText: 'Tu agente de IA' }).getByRole('link', 'Continuar').tap();
@@ -37,6 +38,8 @@ test('LIVE-01: usuario y PIN, borrador, archivo y entrega en el Supabase real', 
   await expect(screen.getByText('ENTREGA RECIBIDA')).toBeVisible();
   await screen.getByRole('link', /Volver a mi curso/).tap();
   await expect(screen.getByRole('row').filter({ hasText: 'Tu agente de IA' })).toContainText('Entregada');
+  const timings = await browser.evaluate(() => performance.getEntriesByType('resource').filter(entry => entry.name.includes('/rest/v1/rpc/')).map(entry => ({ rpc: entry.name.split('/').pop(), ms: Math.round(entry.duration) })));
+  console.log(`LIVE-01 tiempos RPC ${JSON.stringify(timings)}`);
   await app.screenshot('supabase-real-entregada');
   console.log(`Usuario de prueba creado: ${username}`);
 });
