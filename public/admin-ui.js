@@ -3,7 +3,7 @@ import { escapeHtml as e } from './course-data.js';
 export function adminNavigation(active, icon) {
   const items = [
     ['seguimiento', 'compass', 'Seguimiento', 'Inicio'],
-    ['docente', 'message', 'Entregas y preguntas', 'Entregas'],
+    ['docente', 'message', 'Panel docente', 'Docente'],
     ['participantes', 'bot', 'Participantes', 'Alumnos'],
     ['gestionar', 'layers', 'Actividades', 'Actividades'],
     ['perfil', 'lock', 'Mi perfil', 'Perfil'],
@@ -15,6 +15,10 @@ export function adminSummary(matrix) {
   const submissions = matrix.activities.reduce((sum, activity) => sum + activity.submitted, 0);
   const missing = matrix.activities.reduce((sum, activity) => sum + activity.missing, 0);
   return `<div class="admin-summary" data-testid="admin-summary"><article><p><strong>${matrix.students.length}</strong> alumnos</p><span>En tu grupo</span></article><article><p><strong>${submissions}</strong> entregas</p><span>Recibidas</span></article><article><p><strong>${missing}</strong> pendientes</p><span>Por entregar</span></article></div>`;
+}
+
+export function teacherSummary(responses) {
+  return `<div class="admin-summary teacher-summary" aria-label="Resumen de entregas"><article><p><strong>${responses.length}</strong> Entregas</p><span>En esta página</span></article><article><p><strong>${new Set(responses.map(response => response.form_id)).size}</strong> Actividades</p><span>Con entregas</span></article><article><p><strong>${responses.filter(response => response.questions?.trim()).length}</strong> Con preguntas</p><span>Para revisar</span></article></div>`;
 }
 
 export function adminProfile(person, activities, icon) {

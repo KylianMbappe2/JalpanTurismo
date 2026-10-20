@@ -83,8 +83,8 @@ test('STACK-01: alumno y docente con usuario y PIN sobre la base real', async ({
   await screen.getByRole('button', 'Salir', { exact: true }).tap();
   await enter(screen, teacher, '1122');
   await expect(screen.getByRole('heading', 'Seguimiento del grupo.')).toBeVisible();
-  await screen.getByRole('link', 'Entregas y preguntas', { exact: true }).tap();
-  await expect(screen.getByRole('heading', 'Entregas y preguntas')).toBeVisible();
+  await screen.getByRole('navigation', 'Administración').getByRole('link', 'Panel docente', { exact: true }).tap();
+  await expect(screen.getByRole('heading', 'Trabajos entregados')).toBeVisible();
   await screen.getByRole('searchbox', 'Buscar por nombre, negocio o correo').fill('Cabañas Prueba');
   await screen.getByRole('row').filter({ hasText: `Ana Prueba ${suffix}` }).getByRole('button', 'Ver entrega ↗').tap();
   await expect(screen.getByText('¿Puedo conectar mi agente a WhatsApp?')).toBeVisible();
@@ -116,7 +116,7 @@ test('STACK-01: alumno y docente con usuario y PIN sobre la base real', async ({
   await expect(screen.getByRole('status').filter({ hasText: 'Tu entrega se actualizó.' })).toBeVisible();
   await screen.getByRole('button', 'Salir', { exact: true }).tap();
   await enter(screen, teacher, '1122');
-  await screen.getByRole('link', 'Entregas y preguntas', { exact: true }).tap();
+  await screen.getByRole('navigation', 'Administración').getByRole('link', 'Panel docente', { exact: true }).tap();
   await screen.getByRole('searchbox', 'Buscar por nombre, negocio o correo').fill('Cabañas Prueba');
   await screen.getByRole('row').filter({ hasText: `Ana Prueba ${suffix}` }).getByRole('button', 'Ver entrega ↗').tap();
   await expect(screen.getByText('Cabañas corregidas en la pila')).toBeVisible();

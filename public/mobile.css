@@ -67,6 +67,17 @@ body{background:var(--paper)}
 .course-metrics article:nth-child(2){background:var(--sky)}
 .course-metrics article:last-child{background:var(--sand)}
 .course-metrics span,.course-metrics small{font-size:12px}
+.teacher-shortcut{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;margin-bottom:24px;padding:16px 20px;background:var(--mint);border:1px solid #bbd8c7;border-radius:12px;color:var(--forest);font-size:15px;font-weight:600}
+.teacher-shortcut>span{display:flex;align-items:center;gap:10px}
+.submission-activity{display:block;margin-bottom:8px;line-height:1.5}
+.response-question-filter{font-size:13px;min-height:44px;gap:10px}
+.response-question-filter input{flex-shrink:0}
+.teacher-summary p{font-size:13px}
+.response-filters{flex-basis:100%;min-width:0}
+.response-filters summary{min-height:44px;display:list-item;align-content:center;font-size:14px;font-weight:550;color:var(--forest);cursor:pointer;list-style-position:inside}
+.response-filter-fields{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-top:12px}
+.response-filter-fields .filter-field{flex:1 1 200px}
+.response-filter-fields .filter-field select{width:100%}
 @media(max-width:767px){
   html{scroll-padding-bottom:100px}
   .page-width,.header-inner,.site-footer{width:calc(100% - 32px)}

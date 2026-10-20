@@ -1,7 +1,7 @@
 import { createAuth, normalizeUsername, usernamePattern, pinPattern } from './auth.js';
 import { createCourseData, base64ToBlob, formatSize, escapeHtml as e, statusLabel, workState, activityAction, courseProgress, formatDate, responsesCsv, trackingCsv, downloadText } from './course-data.js';
 import { forms, getQuestions, extraFields } from './forms.js';
-import { adminNavigation, adminSummary, adminProfile } from './admin-ui.js';
+import { adminNavigation, adminSummary, adminProfile, teacherSummary } from './admin-ui.js';
 
 export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   const auth = createAuth(config);
@@ -13,6 +13,8 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   let viewGeneration = 0;
   let search = '';
   let activityFilter = '';
+  let onlyQuestions = false;
+  let loginDestination = '#seguimiento';
   let matrix = null;
   let trackSearch = '';
   let trackActivity = '';
@@ -30,7 +32,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   const profile = () => loaded?.context.profile;
 
   function header() {
-    document.querySelector('.site-header nav').innerHTML = auth.user ? `<a href="#curso" class="nav-active">Mi curso</a>${role() === 'instructor' ? '<a href="#seguimiento">Panel docente</a>' : '<a href="#materiales">Materiales</a>'}` : '<a href="#login" class="nav-active">Acceder al curso</a>';
+    document.querySelector('.site-header nav').innerHTML = auth.user ? `<a href="#curso" class="nav-active">Mi curso</a>${role() === 'instructor' ? '<a href="#docente">Panel docente</a>' : '<a href="#materiales">Materiales</a>'}` : '<a href="#login" class="nav-active">Acceder al curso</a>';
     const label = document.querySelector('.course-label');
     label.classList.toggle('course-user', !!auth.user);
     const avatar = `<span class="user-avatar" aria-hidden="true">${e((profile()?.full_name ?? auth.user?.username ?? 'A').slice(0, 1).toUpperCase())}</span>`;
@@ -80,7 +82,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     try {
       if (signup) await auth.signUp(name, username, pin); else await auth.signIn(username, pin);
       await load(true); teacher = null;
-      navigate(role() === 'instructor' ? '#seguimiento' : '#curso');
+      navigate(role() === 'instructor' ? loginDestination : '#curso');
     } catch (error) {
       errorBox.textContent = error.message;
       form.querySelectorAll('input[type="password"], input[name="pin"], input[name="pin2"]').forEach(input => { input.value = ''; });
@@ -104,17 +106,24 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     shell(`<div class="course-page-heading"><div><p class="eyebrow">PARA ACOMPAÑAR TU APRENDIZAJE</p><h1>Materiales del curso.</h1><p>Consulta las guías originales y tenlas a mano al practicar.</p></div></div><div class="resource-list"><a class="resource-item featured-resource" href="/materiales/Presentacion_IA_y_Chatbots.pdf" target="_blank" rel="noopener"><span class="activity-icon">${icon('layers')}</span><div><span class="eyebrow">PRESENTACIÓN</span><h2>IA y chatbots para tu negocio</h2><p>Los conceptos y ejemplos que veremos en el curso.</p></div><span aria-hidden="true">↗</span></a>${forms.map(f => `<a class="resource-item" href="/materiales/${f.source}" target="_blank" rel="noopener"><span class="table-activity-icon">${icon(f.icon)}</span><div><h3>${e(f.title)}</h3><p>Guía de la actividad · PDF</p></div><span aria-hidden="true">↗</span></a>`).join('')}<a class="resource-item" href="/materiales/Ejemplo_lleno_Agente_IA.pdf" target="_blank" rel="noopener"><span class="table-activity-icon">${icon('bot')}</span><div><h3>Un ejemplo de agente de IA</h3><p>Cuestionario y prompt de referencia. Sus datos son inventados.</p></div><span aria-hidden="true">↗</span></a></div>`, 'materiales');
   }
 
-  const filteredResponses = () => (teacher?.responses ?? []).filter(r => (!activityFilter || r.form_id === activityFilter) && [r.full_name, r.business, r.email].some(value => String(value ?? '').toLocaleLowerCase('es').includes(search.toLocaleLowerCase('es'))));
+  const filteredResponses = () => (teacher?.responses ?? []).filter(r => (!activityFilter || r.form_id === activityFilter) && (!onlyQuestions || r.questions?.trim()) && [r.full_name, r.business, r.email].some(value => String(value ?? '').toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))));
+  const responseCount = () => `${filteredResponses().length} ${filteredResponses().length === 1 ? 'entrega' : 'entregas'} en esta vista`;
+  function paintResponses() {
+    const body = document.querySelector('#responses-body');
+    if (!body) return;
+    body.innerHTML = responseRows();
+    document.querySelector('#response-count').textContent = responseCount();
+  }
   function responseRows() {
     const rows = filteredResponses();
-    return rows.length ? rows.map(r => `<tr><td><strong>${e(r.full_name)}</strong><small class="table-subtitle">${e(r.business || r.email || 'Participante')}</small></td><td>${e(forms.find(f => f.id === r.form_id)?.title ?? r.form_id)}</td><td class="table-date">${e(formatDate(r.submitted_at))}</td><td><span class="question-indicator">${r.questions ? 'Con preguntas' : 'Sin preguntas'}</span></td><td><button class="row-action" data-response="${e(r.id)}">Ver entrega ↗</button></td></tr>`).join('') : '<tr><td colspan="5"><div class="course-empty"><h3>No hay entregas en esta vista</h3><p>Las respuestas aparecerán cuando los participantes entreguen sus actividades.</p></div></td></tr>';
+    return rows.length ? rows.map(r => `<tr><td><strong>${e(r.full_name)}</strong><small class="table-subtitle">${e(r.business || r.email || 'Participante')}</small></td><td><span class="submission-activity">${e(forms.find(f => f.id === r.form_id)?.title ?? r.form_id)}</span><span class="status-badge submitted">Entregada</span></td><td class="table-date">${e(formatDate(r.submitted_at))}</td><td><span class="question-indicator">${r.questions ? 'Con preguntas' : 'Sin preguntas'}</span></td><td><button class="row-action" data-response="${e(r.id)}">Ver entrega ↗</button></td></tr>`).join('') : `<tr><td colspan="5"><div class="course-empty"><h3>${teacher?.responses.length ? 'No hay entregas con estos filtros' : 'Todavía no hay trabajos entregados'}</h3><p>${teacher?.responses.length ? 'Prueba con otro alumno o actividad, o limpia los filtros.' : 'Las entregas de tus alumnos aparecerán aquí cuando pulsen Entregar.'}</p></div></td></tr>`;
   }
 
   async function teacherDashboard(view) {
     if (role() !== 'instructor') return studentDashboard();
     if (view === 'seguimiento') return showTracking();
     if (!teacher) teacher = await data.instructor(offset);
-    const title = view === 'participantes' ? 'Personas que aprenden contigo.' : view === 'gestionar' ? 'Prepara el recorrido del curso.' : 'Un lugar para acompañar su avance.';
+    const title = view === 'participantes' ? 'Personas que aprenden contigo.' : view === 'gestionar' ? 'Prepara el recorrido del curso.' : 'Panel docente';
     const heading = `<div class="course-page-heading"><div><p class="eyebrow">PANEL DE ADMINISTRACIÓN</p><h1>${title}</h1><p>Da seguimiento a las actividades y a las preguntas de tu grupo.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>`;
     const metrics = `<div class="course-metrics"><article><span>Participantes${teacher.profiles.length === 200 ? ' en esta lista' : ''}</span><strong>${teacher.profiles.length}</strong><small>Con usuario en el curso</small></article><article><span>Entregas en esta página</span><strong>${teacher.responses.length}</strong><small>Hasta 200 por página</small></article><article><span>Con preguntas</span><strong>${teacher.responses.filter(r => r.questions?.trim()).length}</strong><small>Para retomar durante la clase</small></article></div>`;
     if (view === 'participantes') {
@@ -123,7 +132,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     if (view === 'gestionar') {
       shell(`${heading}<div class="notice">Las actividades publicadas aparecen en el curso de los participantes. Sus entregas anteriores se conservan aunque ocultes una actividad.</div><section class="course-table-section"><div class="table-heading"><div><h2>Tabla de actividades</h2><p>Publicación y fecha de referencia para cada ejercicio.</p></div></div><div class="table-scroll"><table class="course-table management-table"><caption class="sr-only">Configurar publicación y fechas de actividades</caption><thead><tr><th>Actividad</th><th>Disponible</th><th>Fecha y hora límite</th><th><span class="sr-only">Guardar cambios</span></th></tr></thead><tbody>${courseForms().map(f => `<tr data-manage="${f.id}"><td><strong>${e(f.title)}</strong><small class="table-subtitle">Actividad ${e(f.number)} · ${f.minutes} min</small></td><td><label class="check-line"><input type="checkbox" name="published-${f.id}" ${f.is_published ? 'checked' : ''}><span>Publicada</span></label><label class="check-line"><input type="checkbox" name="lock-${f.id}" ${f.lock_after_due ? 'checked' : ''}><span>Bloquear edición después de la fecha límite</span></label></td><td><label class="sr-only" for="due-${f.id}">Fecha de ${e(f.title)}</label><input type="datetime-local" id="due-${f.id}" value="${f.due_at ? e(new Date(new Date(f.due_at).getTime() - new Date(f.due_at).getTimezoneOffset() * 60000).toISOString().slice(0, 16)) : ''}"></td><td><button class="button secondary" data-save-activity="${f.id}">Guardar</button></td></tr>`).join('')}</tbody></table></div><p class="table-footnote">Ocultar la actividad cierra guardados y entregas. Si bloqueas la edición, al pasar la fecha tampoco se puede corregir; si no, la fecha es solo una referencia.</p><p id="management-status" role="status" class="inline-status"></p></section>`, view); return;
     }
-    shell(`${heading}${metrics}<section class="course-table-section"><div class="table-heading"><div><h2>Entregas y preguntas</h2><p>Revisa respuestas, identifica dudas y descarga la lista que estás viendo.</p></div><button class="button secondary" data-course-action="export-csv">${icon('download')} Exportar esta lista</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre, negocio o correo</span><input id="instructor-search" type="search" value="${e(search)}" placeholder="Buscar nombre, negocio o correo…"></label><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="filter-activity"><option value="">Todas las actividades</option>${forms.map(f => `<option value="${f.id}" ${activityFilter === f.id ? 'selected' : ''}>${e(f.title)}</option>`).join('')}</select></label></div><div class="table-scroll"><table class="course-table responses-table"><caption class="sr-only">Entregas de los participantes</caption><thead><tr><th>Participante</th><th>Actividad</th><th>Entregada</th><th>Preguntas</th><th><span class="sr-only">Ver respuestas</span></th></tr></thead><tbody id="responses-body">${responseRows()}</tbody></table></div><div class="table-pagination"><span id="response-count">${filteredResponses().length} entregas en esta vista</span><div><button class="text-button" data-course-action="previous-page" ${offset === 0 ? 'disabled' : ''}>← Anteriores</button><button class="text-button" data-course-action="next-page" ${teacher.responses.length < 200 ? 'disabled' : ''}>Siguientes →</button></div></div><p id="export-status" role="status" class="inline-status"></p></section>`, 'docente');
+    shell(`${heading}${teacherSummary(teacher.responses)}<section class="course-table-section teacher-panel-section"><div class="table-heading"><div><h2>Trabajos entregados</h2><p>Abre una entrega para ver sus respuestas y archivos.</p></div><button class="button secondary" data-course-action="export-csv">${icon('download')} Exportar esta lista</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre, negocio o correo</span><input id="instructor-search" type="search" value="${e(search)}" placeholder="Buscar nombre, negocio o correo…"></label><details class="response-filters" ${activityFilter || onlyQuestions ? 'open' : ''}><summary>Filtrar entregas</summary><div class="response-filter-fields"><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="filter-activity"><option value="">Todas las actividades</option>${forms.map(f => `<option value="${f.id}" ${activityFilter === f.id ? 'selected' : ''}>${e(f.title)}</option>`).join('')}</select></label><label class="check-line response-question-filter"><input type="checkbox" id="response-questions" ${onlyQuestions ? 'checked' : ''}><span>Solo entregas con preguntas</span></label><button type="button" class="text-button" data-course-action="clear-response-filters">Limpiar filtros</button></div></details></div><div class="table-scroll"><table class="course-table responses-table"><caption class="sr-only">Entregas de los participantes</caption><thead><tr><th>Participante</th><th>Actividad</th><th>Entregada</th><th>Preguntas</th><th><span class="sr-only">Ver respuestas</span></th></tr></thead><tbody id="responses-body">${responseRows()}</tbody></table></div><div class="table-pagination"><span id="response-count" data-testid="received-count" aria-live="polite">${responseCount()}</span><div><button class="text-button" data-course-action="previous-page" ${offset === 0 ? 'disabled' : ''}>← Anteriores</button><button class="text-button" data-course-action="next-page" ${teacher.responses.length < 200 ? 'disabled' : ''}>Siguientes →</button></div></div><p id="export-status" role="status" class="inline-status"></p></section>`, 'docente');
   }
 
   async function showResponse(id) {
@@ -161,7 +170,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   async function showTracking() {
     if (!matrix) matrix = await data.tracking();
     const activities = matrix.activities;
-    shell(`<div class="course-page-heading"><div><p class="eyebrow">PANEL DE ADMINISTRACIÓN</p><h1>Seguimiento del grupo.</h1><p>Hola, ${e(profile().full_name.split(' ')[0])}. Aquí puedes revisar el avance de tus alumnos.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>${adminSummary(matrix)}<section class="course-table-section"><div class="table-heading"><div><h2>Alumnos y actividades</h2><p>Toca una actividad para abrir el trabajo del alumno.</p></div><button class="button secondary" data-course-action="export-tracking">${icon('download')} Exportar seguimiento</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre o usuario</span><input id="track-search" type="search" value="${e(trackSearch)}" placeholder="Buscar nombre o usuario…"></label><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="track-activity"><option value="">Todas las actividades</option>${activities.map(activity => `<option value="${activity.id}" ${trackActivity === activity.id ? 'selected' : ''}>${e(activity.title)}</option>`).join('')}</select></label><label class="filter-field"><span class="sr-only">Filtrar por estado</span><select id="track-status"><option value="">Todos los estados</option>${Object.entries(trackText).map(([value, label]) => `<option value="${value}" ${trackStatus === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="check-line track-missing"><input type="checkbox" id="track-missing" ${trackMissing ? 'checked' : ''}><span>Solo quienes no entregaron</span></label></div><div class="activity-totals" data-testid="activity-totals">${activities.map(activity => `<div><strong>${e(activity.title)}</strong><span>entregaron ${activity.submitted} / faltan ${activity.missing}</span></div>`).join('')}</div><div class="table-scroll"><table class="course-table tracking-table"><caption class="sr-only">Seguimiento de alumnos por actividad</caption><thead><tr><th>Alumno</th>${visibleActivities().map(activity => `<th scope="col">${e(activity.title)}<small class="table-subtitle">entregaron ${activity.submitted} / faltan ${activity.missing}</small></th>`).join('')}</tr></thead><tbody id="track-body">${trackingRows()}</tbody></table></div><p class="table-footnote" id="track-count">${filteredMatrix().students.length} alumnos en esta vista</p><p id="track-status-line" role="status" class="inline-status"></p></section>`, 'seguimiento');
+    shell(`<div class="course-page-heading"><div><p class="eyebrow">PANEL DE ADMINISTRACIÓN</p><h1>Seguimiento del grupo.</h1><p>Hola, ${e(profile().full_name.split(' ')[0])}. Aquí puedes revisar el avance de tus alumnos.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>${adminSummary(matrix)}<a class="teacher-shortcut" href="#docente"><span>${icon('message')} Ver entregas recibidas</span>${icon('arrow')}</a><section class="course-table-section"><div class="table-heading"><div><h2>Alumnos y actividades</h2><p>Toca una actividad para abrir el trabajo del alumno.</p></div><button class="button secondary" data-course-action="export-tracking">${icon('download')} Exportar seguimiento</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre o usuario</span><input id="track-search" type="search" value="${e(trackSearch)}" placeholder="Buscar nombre o usuario…"></label><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="track-activity"><option value="">Todas las actividades</option>${activities.map(activity => `<option value="${activity.id}" ${trackActivity === activity.id ? 'selected' : ''}>${e(activity.title)}</option>`).join('')}</select></label><label class="filter-field"><span class="sr-only">Filtrar por estado</span><select id="track-status"><option value="">Todos los estados</option>${Object.entries(trackText).map(([value, label]) => `<option value="${value}" ${trackStatus === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="check-line track-missing"><input type="checkbox" id="track-missing" ${trackMissing ? 'checked' : ''}><span>Solo quienes no entregaron</span></label></div><div class="activity-totals" data-testid="activity-totals">${activities.map(activity => `<div><strong>${e(activity.title)}</strong><span>entregaron ${activity.submitted} / faltan ${activity.missing}</span></div>`).join('')}</div><div class="table-scroll"><table class="course-table tracking-table"><caption class="sr-only">Seguimiento de alumnos por actividad</caption><thead><tr><th>Alumno</th>${visibleActivities().map(activity => `<th scope="col">${e(activity.title)}<small class="table-subtitle">entregaron ${activity.submitted} / faltan ${activity.missing}</small></th>`).join('')}</tr></thead><tbody id="track-body">${trackingRows()}</tbody></table></div><p class="table-footnote" id="track-count">${filteredMatrix().students.length} alumnos en esta vista</p><p id="track-status-line" role="status" class="inline-status"></p></section>`, 'seguimiento');
   }
   function answerList(form, answers = {}) {
     return (form ? getQuestions(form) : []).map(q => `<div><dt>${q.number ? `${q.number}. ` : ''}${e(q.label)}</dt><dd>${e(Array.isArray(answers[q.id]) ? answers[q.id].join(', ') : typeof answers[q.id] === 'boolean' ? answers[q.id] ? 'Completado' : 'Pendiente' : answers[q.id] || 'Sin responder')}</dd>${extraFields[q.id] && answers[extraFields[q.id].id] ? `<dd>${e(answers[extraFields[q.id].id])}</dd>` : ''}</div>`).join('');
@@ -178,7 +187,10 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
 
   async function render(hash) {
     const ticket = ++viewGeneration;
-    if (!auth.user) return showAuth(hash === '#registro' ? 'registro' : 'login');
+    if (!auth.user) {
+      if (hash === '#docente') loginDestination = '#docente';
+      return showAuth(hash === '#registro' ? 'registro' : 'login');
+    }
     try {
       if (!loaded) { main.innerHTML = '<div class="initial-loading" role="status">Preparando tu espacio de aprendizaje…</div>'; await load(); }
       if (ticket !== viewGeneration || !auth.user) return;
@@ -204,10 +216,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     if (event.target.id === 'track-search') { trackSearch = event.target.value; paintTracking(); return; }
     if (event.target.id !== 'instructor-search') return;
     search = event.target.value;
-    const body = document.querySelector('#responses-body');
-    if (!body) return;
-    body.innerHTML = responseRows();
-    document.querySelector('#response-count').textContent = `${filteredResponses().length} entregas en esta vista`;
+    paintResponses();
   });
   document.addEventListener('change', event => {
     if (event.target.id === 'track-activity' || event.target.id === 'track-status' || event.target.id === 'track-missing') {
@@ -218,21 +227,28 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       if (head && matrix) head.innerHTML = `<tr><th>Alumno</th>${visibleActivities().map(activity => `<th scope="col">${e(activity.title)}<small class="table-subtitle">entregaron ${activity.submitted} / faltan ${activity.missing}</small></th>`).join('')}</tr>`;
       paintTracking(); return;
     }
+    if (event.target.id === 'response-questions') { onlyQuestions = event.target.checked; paintResponses(); return; }
     if (event.target.id !== 'filter-activity') return;
     activityFilter = event.target.value;
-    document.querySelector('#responses-body').innerHTML = responseRows();
-    document.querySelector('#response-count').textContent = `${filteredResponses().length} entregas en esta vista`;
+    paintResponses();
   });
   document.addEventListener('click', async event => {
     const button = event.target.closest('button');
     if (!button) return;
     const action = button.dataset.courseAction;
     try {
+      if (action === 'clear-response-filters') {
+        search = ''; activityFilter = ''; onlyQuestions = false;
+        document.querySelector('#instructor-search').value = '';
+        document.querySelector('#filter-activity').value = '';
+        document.querySelector('#response-questions').checked = false;
+        paintResponses(); return;
+      }
       if (action === 'show-password') {
         const input = document.getElementById(button.dataset.target); const show = input.type === 'password'; input.type = show ? 'text' : 'password'; button.textContent = show ? 'Ocultar' : 'Mostrar'; button.setAttribute('aria-pressed', String(show)); return;
       }
       if (action === 'logout') {
-        button.disabled = true; await beforeSignOut(); await auth.signOut(); loaded = null; teacher = null; matrix = null; offset = 0; viewGeneration++; header(); return navigate('#login');
+        button.disabled = true; await beforeSignOut(); await auth.signOut(); loaded = null; teacher = null; matrix = null; offset = 0; search = ''; activityFilter = ''; onlyQuestions = false; loginDestination = '#seguimiento'; viewGeneration++; header(); return navigate('#login');
       }
       if (action === 'refresh') { teacher = null; matrix = null; loaded = null; await render(location.hash); return; }
       if (button.dataset.trackUser && button.dataset.trackForm) return navigate(`#trabajo/${button.dataset.trackUser}/${button.dataset.trackForm}`);

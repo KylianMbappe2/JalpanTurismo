@@ -31,7 +31,7 @@ test('ADMIN-03: todas las vistas caben desde 320px y los accesos son táctiles',
   await login(app, screen);
   for (const width of [320, 360, 390, 430, 768, 1024, 1440]) {
     await browser.setViewport({ width, height: 844 });
-    for (const [link, heading] of [['Seguimiento', 'Seguimiento del grupo.'], ['Entregas y preguntas', 'Entregas y preguntas'], ['Participantes', 'Participantes'], ['Actividades', 'Tabla de actividades'], ['Mi perfil', 'Mi perfil de administrador']]) {
+    for (const [link, heading] of [['Seguimiento', 'Seguimiento del grupo.'], ['Panel docente', 'Panel docente'], ['Participantes', 'Participantes'], ['Actividades', 'Tabla de actividades'], ['Mi perfil', 'Mi perfil de administrador']]) {
       await screen.getByRole('navigation', 'Administración').getByRole('link', link, { exact: true }).tap();
       await expect(screen.getByRole('heading', heading, { exact: true })).toBeVisible();
       const layout = await browser.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, links: [...document.querySelectorAll('.admin-nav a')].map(el => el.getBoundingClientRect().height >= 44) }));

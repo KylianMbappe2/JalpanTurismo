@@ -65,8 +65,8 @@ test('COURSE-02: failed autosave never claims the changes were saved', async ({ 
 test('TEACHER-01: instructor sees participants, response details and CSV', async ({ app, screen, browser }) => {
   await courseFixture(browser, { instructor: true }); await login(app, screen);
   await expect(screen.getByRole('heading', 'Seguimiento del grupo.')).toBeVisible();
-  await screen.getByRole('link', 'Entregas y preguntas', { exact: true }).tap();
-  await expect(screen.getByRole('heading', 'Entregas y preguntas')).toBeVisible();
+  await screen.getByRole('navigation', 'Administración').getByRole('link', 'Panel docente', { exact: true }).tap();
+  await expect(screen.getByRole('heading', 'Trabajos entregados')).toBeVisible();
   await app.screenshot('panel-docente');
   await screen.getByRole('searchbox', 'Buscar por nombre, negocio o correo').fill('Cabañas');
   const file = await browser.waitForDownload(() => screen.getByRole('button', 'Exportar esta lista').tap());
@@ -92,7 +92,7 @@ test('COURSE-03: a student route cannot display the instructor panel', async ({ 
   await courseFixture(browser); await login(app, screen);
   await browser.goto('/#docente');
   await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
-  await expect(screen.getByRole('heading', 'Entregas y preguntas')).toBeHidden();
+  await expect(screen.getByRole('heading', 'Trabajos entregados')).toBeHidden();
 });
 
 test('AUTH-03: instructor resets a forgotten PIN', async ({ app, screen, browser }) => {

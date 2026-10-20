@@ -2,7 +2,9 @@
 
 Curso de IA aplicada al turismo con acceso por **nombre de usuario y PIN** (4 a 6 números), sin correo. Cada alumno elige una actividad, la hace en la misma pantalla y guarda el avance. Una entrega se puede corregir y volver a guardar mientras la actividad siga abierta. El instructor ve en Seguimiento quién entregó y quién no, y abre el trabajo de cada alumno.
 
-La interfaz está pensada para celular: navegación inferior del administrador, cinco accesos (Inicio, Entregas, Alumnos, Actividades y Perfil), resúmenes con colores suaves, tarjetas por alumno y controles táctiles grandes. El perfil muestra el rol **Administrador**; PostgreSQL conserva el rol interno `instructor` y valida los permisos en cada RPC. El nombre de usuario por sí solo no concede acceso administrativo.
+La interfaz está pensada para celular: navegación inferior del administrador, cinco accesos (Inicio, Docente, Alumnos, Actividades y Perfil), resúmenes con colores suaves, tarjetas por alumno y controles táctiles grandes. El perfil muestra el rol **Administrador**; PostgreSQL conserva el rol interno `instructor` y valida los permisos en cada RPC. El nombre de usuario por sí solo no concede acceso administrativo.
+
+**Panel docente** (`#docente`): consulta los trabajos entregados, abre respuestas y descarga archivos. Muestra alumno, actividad, estado Entregada y fecha. La búsqueda está visible; “Filtrar entregas” permite elegir actividad, ver solo las que tienen preguntas y limpiar filtros. El CSV respeta los filtros y la página actual. El enlace directo conserva el destino después de iniciar sesión. También se accede desde “Docente” en el menú inferior o “Ver entregas recibidas” en Inicio. Requiere cuenta con rol instructor; no necesita SQL adicional al curso instalado.
 
 Para activar la cuenta existente de Jonathan, ejecuta los archivos numerados de `~/Desktop/sql jalpan`: `01_Actualizar_Aula_Sierra.sql` y `02_Activar_admin_jonathan.sql`. El segundo promueve la cuenta y conserva su PIN y sus trabajos. Sal y vuelve a entrar después. `LEEME.txt` contiene los pasos.
 

@@ -1,5 +1,20 @@
 # Verificación · entregas editables y seguimiento · 20 de octubre de 2026 UTC
 
+## Panel docente · trabajos entregados
+
+| Caso | Estado y resultado |
+| --- | --- |
+| PANEL-01 | Aprobado: enlace directo `#docente`, inicio de sesión conserva el destino, lista de entregas y recarga |
+| PANEL-02 | Aprobado: búsqueda por alumno/negocio/correo, filtro por actividad, solo con preguntas, vacío y limpiar filtros |
+| PANEL-03 | Aprobado: vista sin desbordamiento a 320, 390, 768 y 1440 px, detalle de respuestas y preguntas, descarga y regreso a la lista |
+| Regresión | 54/54 e2e; ejecución `01a15921-2296-7aca-aef3-1e3010b84300`, `.e2e/teacher-full/report.json` |
+| Filtros plegables finales | 12/12: PANEL-01–03, TEACHER-01–02 y ADMIN-03 en ambos tamaños; ejecución `01a15923-80c5-7eff-b031-6c9dfd020404`, `.e2e/teacher-final/report.json` |
+| Pila real local | 2/2; ejecución `01a15921-2295-7840-bed2-dcaf73c46db2`, `.e2e/teacher-stack/report.json` |
+| Unitarias y compilación | 31/31; compilación correcta, incluida la versión final de filtros plegables |
+| Supabase real | Aprobado: `jonathan` ya devuelve rol instructor y puede consultar `course_instructor`; comprobación de solo lectura y sesión temporal cerrada |
+
+Se presenta explícitamente la sección **Panel docente**, con acceso desde el menú, la cabecera y “Ver entregas recibidas”. La lista muestra solo entregas oficiales y conserva paginación y CSV de la vista actual. Los filtros adicionales están plegados para dar prioridad a los trabajos en el celular. Usa las RPC existentes; no se modificó SQL, PIN, roles ni datos de alumnos. El estado anterior de promoción pendiente de Jonathan ya fue resuelto en Supabase.
+
 ## Panel de administrador y prioridad móvil
 
 | Caso / comprobación | Resultado | Evidencia |
