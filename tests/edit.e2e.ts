@@ -72,7 +72,7 @@ test('TRACK-02: el detalle abre un borrador y una entrega con archivos', async (
   const download = await browser.waitForDownload(() => screen.getByRole('listitem').filter({ hasText: 'plan-de-negocio.pdf' }).getByRole('button', 'Descargar').tap());
   await expect(await readFile(download.absolutePath, 'utf8')).toBe('pdf-bytes');
   await screen.getByRole('link', '← Volver al seguimiento').tap();
-  await screen.getByRole('button', 'María Bosque, WhatsApp Business: En progreso').tap();
+  await screen.getByRole('button', 'María Bosque, Guía para mejorar tus prompts: En progreso').tap();
   await expect(screen.getByText('Hola, soy María y este es mi borrador')).toBeVisible();
   await expect(screen.getByText('Todavía no hay una entrega definitiva.')).toBeVisible();
   await app.screenshot('detalle-borrador-y-entrega');

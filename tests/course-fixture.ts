@@ -25,7 +25,7 @@ export async function courseFixture(browser, options = {}) {
   const mariaId = '10000000-0000-4000-8000-000000000003';
   const role = options.instructor ? 'instructor' : 'student';
   const profile = { user_id: ownId, username: options.instructor ? 'docente' : 'ana.sierra', full_name: options.instructor ? 'Docente Sierra' : 'Ana Sierra', email: '', business: '', phone: '', municipality: '', ...options.profile };
-  const activities = forms.map((f, i) => ({ id: f.id, title: f.title, version: 1, position: i + 1, is_published: true, due_at: null, lock_after_due: false, editable: true, closed_reason: null }));
+  const activities = forms.map((f, i) => ({ id: f.id, title: f.title, version: 1, position: i + 1, is_published: !f.retired, due_at: null, lock_after_due: false, editable: true, closed_reason: null }));
   if (options.closedForm) {
     const activity = activities.find(f => f.id === options.closedForm);
     activity.is_published = true;
@@ -36,11 +36,11 @@ export async function courseFixture(browser, options = {}) {
   const works = new Map();
   const versions = [];
   const luisPayload = { id: '20000000-0000-4000-8000-000000000002', form_id: 'agente-ia', version: 1, participant: { name: 'Luis Turismo', email: 'luis@example.test', phone: '4411234567', business: 'Cabañas del Bosque', municipality: 'Jalpan' }, answers: { a2: 'Cabañas del Bosque', a9: ['Transferencia'] }, questions: '¿Cómo activo mi agente?', consent: true };
-  const mariaPayload = { id: '20000000-0000-4000-8000-000000000030', form_id: 'whatsapp', version: 1, participant: { name: 'María Bosque', email: '', phone: '', business: 'Bosque Tours', municipality: 'Pinal de Amoles' }, answers: { w1: 'Hola, soy María y este es mi borrador' }, questions: '¿El horario de ausencia se guarda solo?', consent: false };
+  const mariaPayload = { id: '20000000-0000-4000-8000-000000000030', form_id: 'guia-prompts', version: 1, participant: { name: 'María Bosque', email: '', phone: '', business: 'Bosque Tours', municipality: 'Pinal de Amoles' }, answers: { g2: 'Hola, soy María y este es mi borrador' }, questions: '¿El horario de ausencia se guarda solo?', consent: false };
   const nowSeed = new Date().toISOString();
   const roster = options.instructor ? [
     { user_id: luisId, username: 'luis', full_name: 'Luis Turismo', email: 'luis@example.test', business: 'Cabañas del Bosque', municipality: 'Jalpan', role: 'student', updated_at: nowSeed, work: [{ user_id: luisId, form_id: 'agente-ia', payload: luisPayload, step: 1, revision: 2, status: 'submitted', saved_at: nowSeed, submitted_at: nowSeed, resubmitted_at: null, response_id: luisPayload.id }] },
-    { user_id: mariaId, username: 'maria.bosque', full_name: 'María Bosque', email: '', business: 'Bosque Tours', municipality: 'Pinal de Amoles', role: 'student', updated_at: nowSeed, work: [{ user_id: mariaId, form_id: 'whatsapp', payload: mariaPayload, step: 1, revision: 1, status: 'draft', saved_at: nowSeed, submitted_at: null, resubmitted_at: null, response_id: null }] },
+    { user_id: mariaId, username: 'maria.bosque', full_name: 'María Bosque', email: '', business: 'Bosque Tours', municipality: 'Pinal de Amoles', role: 'student', updated_at: nowSeed, work: [{ user_id: mariaId, form_id: 'guia-prompts', payload: mariaPayload, step: 1, revision: 1, status: 'draft', saved_at: nowSeed, submitted_at: null, resubmitted_at: null, response_id: null }] },
   ] : [];
   const responses = options.instructor ? [{ id: luisPayload.id, student_id: luisId, full_name: 'Luis Turismo', email: 'luis@example.test', phone: '4411234567', business: 'Cabañas del Bosque', municipality: 'Jalpan', form_id: 'agente-ia', submitted_at: nowSeed, questions: '¿Cómo activo mi agente?', answers: { a2: 'Cabañas del Bosque', a9: ['Transferencia'] }, edit_count: 0 }] : [];
   if (options.closedForm && !options.instructor) {
@@ -117,7 +117,7 @@ export async function courseFixture(browser, options = {}) {
       const activity = activities.find(f => f.id === body.p_form_id);
       if (!activity || activity.editable === false) return route.fulfill({ status: 403, json: { code: 'PT403' } });
       if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'text/plain'].includes(body.p_mime)) return route.fulfill({ status: 415, json: { code: 'PT415' } });
-      const file = { id: `30000000-0000-4000-8000-${String(files.length + 1).padStart(12, '0')}`, user_id: ownId, form_id: body.p_form_id, name: body.p_name, mime: body.p_mime, size: Math.floor(body.p_data.length * 3 / 4), created_at: now, data: body.p_data };
+      const file = { id: `30000000-0000-4000-8000-${String(files.length + 1).padStart(12, '0')}`, user_id: ownId, form_id: body.p_form_id, slot: body.p_slot ?? null, name: body.p_name, mime: body.p_mime, size: Math.floor(body.p_data.length * 3 / 4), created_at: now, data: body.p_data };
       files.push(file); return fulfill(meta(file));
     }
     if (name === 'course_delete_file') {

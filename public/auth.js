@@ -51,7 +51,7 @@ export function createAuth(config, fetcher = fetch) {
         PT404: 'No encontramos este archivo.',
         PT413: 'El archivo supera 5 MB. Elige uno más pequeño.',
         PT415: 'Tipo de archivo no permitido. Usa foto (JPG, PNG, WebP), PDF, Word, Excel, PowerPoint o texto.',
-        PT429: 'Ya adjuntaste 5 archivos en esta actividad. Quita uno para agregar otro.',
+        PT429: 'Llegaste al límite de archivos en este apartado. Quita uno para agregar otro.',
         PGRST202: 'El curso necesita terminar su configuración. Avisa al instructor.',
         '42P01': 'El curso necesita terminar su configuración. Avisa al instructor.',
       };

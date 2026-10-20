@@ -111,11 +111,11 @@ test('AUTH-03: instructor resets a forgotten PIN', async ({ app, screen, browser
   await expect(fixture.pinResets[0]).toEqual({ p_token: 'a'.repeat(64), p_user_id: '10000000-0000-4000-8000-000000000002', p_pin: '4321' });
 });
 
-test('COURSE-04: seven original PDF materials are available', async ({ app, screen, browser }) => {
+test('COURSE-04: original PDF materials of the active activities are available', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
   await screen.getByRole('link', 'Materiales del curso', { exact: true }).tap();
   await expect(screen.getByRole('heading', 'Materiales del curso.')).toBeVisible();
-  await expect(screen.getByRole('link', /Guía de la actividad/)).toHaveCount(5);
+  await expect(screen.getByRole('link', /Guía de la actividad/)).toHaveCount(4);
   const response = await fetch(new URL('/materiales/Evaluacion_diagnostica.pdf', app.baseUrl), { method: 'HEAD' });
   await expect(response.status).toBe(200);
   await expect(response.headers.get('content-type')).toBe('application/pdf');

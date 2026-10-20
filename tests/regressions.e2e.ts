@@ -186,11 +186,12 @@ test('BUG-NAV: el documento inicial no contiene enlaces vacíos y las marcas lle
   await expect(screen.getByRole('contentinfo').getByRole('link', 'Aula Sierra')).toHaveAttribute('href', '/');
 });
 
-test('BUG-NUMBER: las respuestas rápidas de WhatsApp se numeran 3, 4 y 5', async ({ app, screen, browser }) => {
+test('BUG-NUMBER: WhatsApp ya no aparece y la guía de prompts es la actividad 02', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
-  await screen.getByRole('row').filter({ hasText: 'WhatsApp Business' }).getByRole('link', 'Comenzar').tap();
-  await expect(screen.getByTestId('question-w3')).toContainText('3. /precios');
-  await expect(screen.getByTestId('question-w4')).toContainText('4. /ubicacion');
-  await expect(screen.getByTestId('question-w5')).toContainText('5. /horario');
-  await app.screenshot('whatsapp-numeracion-correcta');
+  await expect(screen.getByRole('row').filter({ hasText: 'WhatsApp Business' })).toHaveCount(0);
+  await screen.getByRole('row').filter({ hasText: 'Guía para mejorar tus prompts' }).getByRole('link', 'Comenzar').tap();
+  await expect(await browser.evaluate(() => document.querySelector('.form-sidebar .eyebrow')?.textContent)).toBe('ACTIVIDAD 02');
+  await expect(screen.getByTestId('question-g3')).toContainText('3. ¿Quién eres?');
+  await browser.goto('/#actividad/whatsapp');
+  await expect(screen.getByRole('heading', 'Actividad no encontrada')).toBeVisible();
 });

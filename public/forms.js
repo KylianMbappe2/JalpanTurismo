@@ -1,6 +1,9 @@
 const text = (id, number, label, hint = '', required = false) => ({ id, number, label, hint, type: 'text', required });
 const choice = (id, number, label, options, type = 'radio', required = false) => ({ id, number, label, options, type, required });
 const check = (id, label) => ({ id, label, type: 'check', required: false });
+// Espacio para subir capturas o fotos; los archivos se guardan aparte, no dentro de las respuestas.
+const upload = (id, number, label, hint = '') => ({ id, number, label, hint, type: 'upload', required: false });
+const trendsUrl = 'https://trends.google.com/trends/explore?date=today%205-y&geo=MX&q=Pinal%20de%20Amoles%20%2B%20Cuatro%20Palos%20%2B%20Chuveje';
 
 export const forms = [
   {
@@ -21,7 +24,40 @@ export const forms = [
     ],
   },
   {
-    id: 'whatsapp', version: 1, number: '02', title: 'WhatsApp Business', short: 'WhatsApp',
+    id: 'guia-prompts', version: 1, number: '02', title: 'Guía para mejorar tus prompts', short: 'Mejores prompts',
+    category: 'GUÍA PRÁCTICA', icon: 'spark', minutes: 30,
+    description: 'Descubre qué le falta a un prompt básico y arma uno que dé respuestas útiles para tu negocio.',
+    instructions: 'Un <strong>prompt</strong> es la instrucción que le das a la IA. Mientras más contexto le das, mejor te responde. Aquí vas a analizar prompts básicos, descubrir qué les falta y armar uno mejor paso a paso.',
+    sections: [
+      { title: 'Los 5 ingredientes de un buen prompt', description: 'Un buen prompt dice <strong>quién eres</strong>, <strong>qué ofreces</strong>, <strong>qué necesitas</strong>, el <strong>tono</strong> y el <strong>formato</strong> de la respuesta.',
+        compare: { basic: 'Escribe un mensaje para mi negocio.', better: 'Soy dueña de Cabañas El Mirador en Pinal de Amoles. Ofrezco cabañas para 4 personas a $1,200 la noche con desayuno. Escribe 3 mensajes cortos de WhatsApp para invitar a familias a ver el mar de nubes en noviembre. Tono amable y cercano, máximo 2 emojis y 3 líneas por mensaje.' },
+        questions: [
+          choice('g1', 1, '¿Qué le falta al prompt básico?', ['Quién eres y dónde está tu negocio', 'Qué ofreces y a qué precio', 'Qué mensaje necesitas y para quién', 'El tono', 'El formato o el largo'], 'multi'),
+          text('g2', 2, '¿Cómo está enfocado el prompt básico? ¿Qué le agregarías?'),
+        ] },
+      { title: 'Arma tu prompt mejorado', description: 'Llena cada ingrediente con los datos de tu negocio y toca <strong>Armar mi prompt</strong>. Después puedes ajustarlo a tu gusto.', questions: [
+        text('g3', 3, '¿Quién eres?', 'Ej. Soy dueña de Cabañas El Mirador en Pinal de Amoles.'),
+        text('g4', 4, '¿Qué ofreces?', 'Ej. Cabañas para 4 personas a $1,200 la noche con desayuno.'),
+        text('g5', 5, '¿Qué necesitas que haga la IA?', 'Ej. 3 mensajes para invitar a familias a ver el mar de nubes.'),
+        choice('g6', 6, '¿Qué tono quieres?', ['Amable y cercano', 'Formal', 'Divertido', 'Breve y directo']),
+        choice('g7', 7, '¿Qué formato quieres?', ['Mensaje corto de WhatsApp (máximo 3 líneas)', 'Publicación para Facebook o Instagram', 'Lista con viñetas', 'Tabla']),
+        { ...text('g8', 8, 'Tu prompt mejorado', 'Toca «Armar mi prompt» y revisa que tenga los 5 ingredientes.'), builder: true, meter: true },
+      ] },
+      { title: 'Pruébalo: antes y después', description: 'Abre ChatGPT. Pega primero el prompt básico y toma captura. Luego pega tu prompt mejorado y toma otra captura. Compara las respuestas.', questions: [
+        upload('g9', 9, 'Captura de la respuesta al prompt básico'),
+        upload('g10', 10, 'Captura de la respuesta a tu prompt mejorado'),
+        text('g11', 11, '¿Qué cambió en la respuesta?'),
+      ] },
+      { title: 'Reto: mejora estos prompts', description: 'Reescribe cada prompt básico con los 5 ingredientes. El medidor te dice qué te falta.', questions: [
+        { ...text('g12', 12, 'Mejora: «Hazme una publicación para Facebook.»'), meter: true },
+        { ...text('g13', 13, 'Mejora: «¿Cuánto debo cobrar?»'), meter: true },
+        { ...text('g14', 14, 'Mejora: «Contesta a un cliente que pregunta si hay lugar.»'), meter: true },
+      ] },
+    ],
+  },
+  {
+    // Retirada del curso: se conserva solo para mostrar entregas anteriores.
+    id: 'whatsapp', version: 1, number: '—', title: 'WhatsApp Business', short: 'WhatsApp', retired: true,
     category: 'PRÁCTICA', icon: 'message', minutes: 30, source: 'Practica_WhatsApp_Business.pdf',
     description: 'Prepara tu bienvenida, mensaje de ausencia y respuestas rápidas para tus clientes.',
     instructions: 'Hazlo en tu celular, con tu negocio real. Al terminar, manda una captura al grupo del curso. Registra aquí los textos que preparaste.',
@@ -53,21 +89,34 @@ export const forms = [
   },
   {
     id: 'meta', version: 1, number: '04', title: 'Meta Business Suite', short: 'Meta Business',
-    category: 'PRÁCTICA', icon: 'layers', minutes: 20, source: 'Practica_Meta_Business_Suite.pdf',
-    description: 'Lleva tus mensajes automáticos a Facebook e Instagram y comprueba que funcionen.',
-    instructions: 'Solo si tu negocio tiene página de Facebook o cuenta de Instagram. Usa los mismos textos de tu WhatsApp. Al terminar, manda una captura al grupo del curso.',
+    category: 'PRÁCTICA', icon: 'layers', minutes: 30, source: 'Practica_Meta_Business_Suite.pdf',
+    description: 'Configura tu perfil, conecta Facebook e Instagram, programa una publicación y activa tus mensajes automáticos.',
+    instructions: 'Descarga la app <strong>Meta Business Suite</strong> desde Play Store (Android) o App Store (iPhone) y entra con la cuenta de Facebook de tu negocio. Toma una captura de cada paso y súbela en su espacio.',
     sections: [
-      { title: 'Encuentra las automatizaciones', description: 'Entra a Meta Business Suite → Bandeja de entrada y toca el ícono parecido a un átomo.', questions: [choice('m1', 1, 'Canal de la práctica', ['Messenger', 'Instagram', 'Ambos', 'No aplica: mi negocio no tiene estas cuentas'])] },
-      { title: 'Respuesta automática', description: 'Activa el interruptor, elige el canal, escribe tu saludo, revisa la vista previa y guarda los cambios.', questions: [text('m2', 2, 'Tu saludo automático', 'Espacio para registrar el texto que preparaste.')] },
-      { title: 'Mensaje de ausencia', description: 'Activa el interruptor, elige los días que no atiendes, zona horaria Ciudad de México y horario de ausencia. Guarda los cambios.', questions: [text('m3', 3, 'Tu mensaje de ausencia', 'Espacio para registrar el texto que preparaste.')] },
-      { title: 'Prueba', description: 'Escríbele a tu página desde otra cuenta y revisa qué recibes.', questions: [check('m4', 'Respuesta automática activa'), check('m5', 'Mensaje de ausencia activo'), check('m6', 'Captura enviada al grupo')] },
+      { title: 'Tu perfil configurado', description: 'En la app toca tu negocio → <strong>Editar</strong>. Completa foto, descripción, horario, teléfono, ubicación y botón de contacto.', questions: [
+        upload('m7', 1, 'Captura de tu perfil configurado en Meta Business Suite'),
+      ] },
+      { title: 'Tus redes conectadas', description: 'En <strong>Configuración → Cuentas</strong> revisa que aparezcan tu página de Facebook y tu cuenta de Instagram.', questions: [
+        choice('m1', 2, '¿Qué redes conectaste?', ['Messenger', 'Instagram', 'Ambos', 'No aplica: mi negocio no tiene estas cuentas']),
+        upload('m8', 3, 'Captura de tus redes conectadas'),
+      ] },
+      { title: 'Programa una publicación', description: 'Toca <strong>Crear → Publicación</strong>, elige Facebook e Instagram, agrega foto y texto, toca <strong>Opciones de programación</strong> y elige una fecha futura. Toma captura en <strong>Planificador</strong>.', questions: [
+        text('m9', 4, '¿Qué publicaste y para qué fecha la programaste?'),
+        upload('m10', 5, 'Captura de tu publicación programada'),
+      ] },
+      { title: 'Mensajes automáticos', description: 'En <strong>Bandeja de entrada → Automatizaciones</strong> activa la respuesta automática y el mensaje de ausencia con los textos de tu WhatsApp.', questions: [
+        text('m2', 6, 'Tu saludo automático', 'Espacio para registrar el texto que preparaste.'),
+        text('m3', 7, 'Tu mensaje de ausencia', 'Espacio para registrar el texto que preparaste.'),
+      ] },
+      { title: 'Prueba', description: 'Escríbele a tu página desde otra cuenta y revisa qué recibes.', questions: [check('m4', 'Respuesta automática activa'), check('m5', 'Mensaje de ausencia activo'), check('m6', 'Subí mis capturas aquí')] },
     ],
   },
   {
     id: 'agente-ia', version: 1, number: '05', title: 'Tu agente de IA', short: 'Agente de IA',
     category: 'PRÁCTICA FINAL', icon: 'bot', minutes: 45, source: 'Practica_Agente_IA_WhatsApp.pdf',
     description: 'Reúne los datos de tu negocio para preparar tu agente de IA en WhatsApp Business.',
-    instructions: 'Contesta con los datos reales de tu negocio. Con tus respuestas vas a armar las instrucciones (el prompt) de tu agente de IA en WhatsApp Business: Herramientas → Agente de IA. Si no sabes una respuesta, déjala en blanco y pregúntala en clase.',
+    instructions: 'Contesta con los datos reales de tu negocio. Al final, la página junta todas tus respuestas en <strong>un solo prompt</strong> listo para copiar y pegar en ChatGPT o en WhatsApp Business → Herramientas → Agente de IA. Si no sabes una respuesta, déjala en blanco y pregúntala en clase.',
+    agentPrompt: true,
     sections: [
       { title: 'Tu negocio', questions: [
         choice('a1', 1, '¿Qué tipo de negocio tienes?', ['Hospedaje (hotel, cabañas, posada)', 'Restaurante o cocina típica', 'Recorridos o tours', 'Guía turístico', 'Transporte', 'Otro']),
@@ -89,6 +138,98 @@ export const forms = [
       ] },
     ],
   },
+  {
+    id: 'pinal-temporadas', version: 1, number: '06', title: '¿Cuándo vienen los turistas a Pinal?', short: 'Temporadas',
+    category: 'PRÁCTICA 1 · PINAL', icon: 'compass', minutes: 30,
+    description: 'Descubre en Google Trends en qué meses buscan Pinal de Amoles y prepara una promoción.',
+    instructions: 'Hazlo desde tu celular. Sigue los pasos en orden, toma las capturas que se piden y súbelas en cada espacio. Cambia lo que está entre [corchetes] por los datos de tu negocio.',
+    sections: [
+      { title: 'Busca en Google Trends', description: `Abre <a href="${trendsUrl}" target="_blank" rel="noopener">este enlace de Google Trends ↗</a>. Toca el pico más alto de la gráfica para ver el mes y toma una captura de la gráfica.`, questions: [
+        text('t1', 1, '¿Qué mes tiene el pico más alto?'),
+        upload('t2', 2, 'Captura de tu gráfica'),
+      ] },
+      { title: 'Pregúntale a ChatGPT', prompt: 'Soy dueño de [tu negocio] en Pinal de Amoles. Te mando una gráfica de Google Trends de cuándo busca la gente Pinal de Amoles. Dime en qué meses hay más interés, cuándo debo publicar mis promociones y dame una promoción para mi negocio que aproveche el mar de nubes o los atractivos cercanos.', description: 'Abre ChatGPT, toca el +, adjunta tu captura de la gráfica y pega este prompt. Toma captura de la respuesta.', questions: [
+        upload('t3', 3, 'Captura de la respuesta de ChatGPT'),
+      ] },
+      { title: 'Tu promoción', questions: [
+        text('t4', 4, '¿Qué ofreces en tu promoción?'),
+        text('t5', 5, '¿Cuándo la publicarías?'),
+      ] },
+    ],
+  },
+  {
+    id: 'pinal-competencia', version: 1, number: '07', title: 'Investiga a tu competencia con IA', short: 'Competencia',
+    category: 'PRÁCTICA 2 · PINAL', icon: 'spark', minutes: 35,
+    description: 'Usa la investigación de ChatGPT para comparar precios de negocios como el tuyo.',
+    instructions: 'Abre ChatGPT, toca el + y elige Investigación avanzada. Si no la tienes, usa Búsqueda en Internet o Grok con DeepSearch. Revisa siempre los enlaces: la IA puede equivocarse.',
+    sections: [
+      { title: 'Investiga con IA', prompt: 'Soy dueño de [tu negocio] en Pinal de Amoles, Querétaro. Busca en internet los precios actuales de negocios como el mío en el municipio. Dame una tabla con: nombre, precio entre semana, precio en fin de semana, qué incluye y el enlace de cada precio. No inventes datos: si no encuentras un precio, escribe "No encontrado".', description: 'Pega el prompt, toca Empezar y espera el resultado. Toma captura de la tabla.', questions: [
+        upload('k1', 1, 'Captura de la tabla que te dio la IA'),
+      ] },
+      { title: 'Confirma los precios', description: 'Abre 2 enlaces de la tabla y revisa que el precio coincida.', questions: [
+        text('k2', 2, '¿Qué precios confirmaste? ¿Coincidían con la tabla?'),
+        upload('k3', 3, 'Captura o foto de 1 precio que confirmaste'),
+      ] },
+      { title: 'Tu diferencia', questions: [
+        text('k4', 4, '¿En qué te puedes diferenciar de ellos?'),
+      ] },
+    ],
+  },
+  {
+    id: 'pinal-precios', version: 1, number: '08', title: '¿Cuánto deberías cobrar?', short: 'Precios',
+    category: 'PRÁCTICA 3 · PINAL', icon: 'layers', minutes: 25,
+    description: 'Calcula una tarifa base con tus costos, tu margen y las comisiones que pagas.',
+    instructions: 'Ten a la mano tus costos reales y una calculadora. Cambia lo que está entre [corchetes] por tus datos.',
+    sections: [
+      { title: 'Tus números', description: 'Anota tus costos por servicio: limpieza, luz, gas, insumos, mantenimiento y pago a quien te ayuda.', questions: [
+        text('r1', 1, 'Tus costos por servicio', 'Escribe cada costo y el total.'),
+        text('r2', 2, '¿Cuánto quieres ganar? (margen en %)'),
+        text('r3', 3, '¿Cuánto pagas de comisión? (Booking, Airbnb, tarjeta, en %)'),
+      ] },
+      { title: 'Pregúntale a ChatGPT', prompt: 'Actúa como asesor financiero de pequeños negocios turísticos. Soy dueño de [tu negocio] en Pinal de Amoles. Mis costos por servicio son [cantidad], mi margen deseado sobre ventas es [porcentaje] y pago una comisión de [porcentaje]. Calcula una tarifa base, muestra la fórmula y plantea tres escenarios de precios. Explica qué información necesito antes de aplicarlos.', questions: [
+        upload('r4', 4, 'Captura de la respuesta de ChatGPT'),
+      ] },
+      { title: 'Comprueba y llena tu tabla', description: 'Comprueba la cuenta con tu calculadora: <strong>Precio = Costo ÷ (1 − margen − comisión)</strong>. Ejemplo: costo $600, margen 30% y comisión 15% → 600 ÷ 0.55 = $1,091.', questions: [
+        text('r5', 5, 'Precio en temporada baja'),
+        text('r6', 6, 'Precio en temporada media'),
+        text('r7', 7, 'Precio en temporada alta'),
+        upload('r8', 8, 'Foto de tu tabla de precios por temporada'),
+      ] },
+    ],
+  },
+  {
+    id: 'pinal-estrategia', version: 1, number: '09', title: 'Tu estrategia para atraer clientes', short: 'Estrategia',
+    category: 'PRÁCTICA 4 · PINAL', icon: 'message', minutes: 25,
+    description: 'Junta lo que encontraste y arma una propuesta con 3 acciones para el próximo mes.',
+    instructions: 'Junta lo que encontraste en las prácticas 1, 2 y 3: meses de más interés, tu tabla de competencia y tus precios por temporada.',
+    sections: [
+      { title: 'Arma tu propuesta', prompt: 'Soy dueño de [tu negocio] en Pinal de Amoles. Con esta información: [meses de más interés], [mi tabla de competencia] y [mis precios por temporada], ayúdame a crear una propuesta sencilla: qué promover, a quién, a qué precio y cómo diferenciarme. Dame 3 acciones para el próximo mes.', questions: [
+        upload('e1', 1, 'Captura de la propuesta de ChatGPT'),
+      ] },
+      { title: 'Tus 3 acciones para el próximo mes', description: 'Quédate solo con las acciones que sí puedes hacer.', questions: [
+        text('e2', 2, 'Acción 1'),
+        text('e3', 3, 'Acción 2'),
+        text('e4', 4, 'Acción 3'),
+      ] },
+    ],
+  },
+  {
+    id: 'pinal-cierre', version: 1, number: '10', title: 'Cierre · Mi estrategia turística con IA', short: 'Cierre',
+    category: 'CIERRE · PINAL', icon: 'bot', minutes: 10,
+    description: 'Resume lo que aprendiste y la acción que aplicarás en tu negocio.',
+    instructions: 'Contesta con tus palabras. Puedes escribir aquí tus respuestas o subir una foto de tu ficha.',
+    sections: [
+      { title: 'Contesta', questions: [
+        text('z1', 1, '¿Qué tipo de negocio tienes?'),
+        text('z2', 2, '¿Qué descubrí de mi competencia o de la demanda?'),
+        text('z3', 3, '¿Qué precio o estrategia voy a probar?'),
+        text('z4', 4, '¿Qué acción aplicaré en mi negocio?'),
+      ] },
+      { title: 'Tu ficha', questions: [
+        upload('z5', 5, 'Foto de tu ficha', 'Opcional si ya escribiste tus respuestas.'),
+      ] },
+    ],
+  },
 ];
 
 // Complementary fields retain the PDF's open "Otro" and group-size blanks.
@@ -99,3 +240,7 @@ export const extraFields = {
   a19: { id: 'a19_group', label: '¿A partir de cuántas personas debe pasarte un grupo?' },
 };
 export const getQuestions = form => form.sections.flatMap(s => s.questions);
+export const activeForms = () => forms.filter(form => !form.retired);
+// Preguntas que guardan una respuesta (excluye los espacios para subir archivos).
+export const getAnswerQuestions = form => getQuestions(form).filter(q => q.type !== 'upload');
+export const getUploadSlots = form => getQuestions(form).filter(q => q.type === 'upload');

@@ -2,10 +2,10 @@ import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
 import { courseFixture, login } from './course-fixture.ts';
 
-test('WEB-01: five activities and privacy notice are available', async ({ app, screen, browser }) => {
+test('WEB-01: ten activities and privacy notice are available', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
   await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
-  await expect(screen.getByRole('table').getByRole('row')).toHaveCount(6);
+  await expect(screen.getByRole('table').getByRole('row')).toHaveCount(11);
   await app.screenshot('tabla-de-actividades');
   await screen.getByRole('button', /Privacidad de tus datos/).tap();
   await expect(screen.getByRole('dialog')).toBeVisible();
@@ -15,6 +15,7 @@ test('WEB-01: five activities and privacy notice are available', async ({ app, s
 test('WEB-02: name and diagnostic answers are required, No is valid', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
   await screen.getByRole('row').filter({ hasText: 'Evaluación diagnóstica' }).getByRole('link', 'Comenzar').tap();
+  await screen.getByText('Tus datos', { exact: true }).tap();
   await screen.getByLabel(/Nombre completo/).fill('');
   await screen.getByRole('button', 'Entregar').tap();
   await expect(screen.getByText('Escribe tu nombre completo (de 2 a 120 caracteres).')).toBeVisible();
@@ -54,7 +55,7 @@ test('WEB-04: consent, failed send, retry and confirmed receipt', async ({ app, 
   await app.screenshot('entrega-confirmada-curso');
   await screen.getByRole('link', 'Volver a mi curso').tap();
   await expect(screen.getByRole('row').filter({ hasText: 'Tu agente de IA' })).toContainText('Entregada');
-  await expect(screen.getByText('20% completado')).toBeVisible();
+  await expect(screen.getByText('10% completado')).toBeVisible();
   await screen.getByRole('row').filter({ hasText: 'Tu agente de IA' }).getByRole('link', 'Editar entrega').tap();
   await expect(screen.getByText('Ya entregaste; los cambios actualizan tu entrega')).toBeVisible();
   await expect(screen.getByTestId('question-a2').getByRole('textbox')).toHaveValue('Mi negocio de prueba');

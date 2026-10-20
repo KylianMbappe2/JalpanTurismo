@@ -286,3 +286,10 @@
 .input-limit { display: block; }
 @keyframes saving-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .saving-spinner { animation: none; } }
+.slot-files{margin-top:6px}
+.slot-files .file-list{margin:8px 0}
+.slot-files .file-empty{margin:6px 0 10px}
+.slot-files .inline-status{padding:0}
+.slot-files .save-warning{color:var(--error)}
+.question-label svg{width:14px;height:14px;vertical-align:-2px;transform:rotate(180deg);color:#667d5e}
+.file-slot{display:block;font-weight:400;color:var(--muted);font-size:10px}

@@ -1,6 +1,7 @@
 import { forms, extraFields, getQuestions } from './forms.js';
 import { validateSubmission, isConfigured } from './submission.js';
 import { createCourse } from './course.js';
+import { promptIngredients, buildImprovedPrompt, buildAgentPrompt } from './prompts.js';
 import { fileLimits, fileAccept, fileType, formatSize, activityOpen, closedReason, workFingerprint } from './course-data.js';
 
 const main = document.querySelector('main');
@@ -66,6 +67,7 @@ async function saveDraft() {
     } catch (error) {
       current.dirty = workFingerprint(payload()) !== current.savedFingerprint;
       current.saveError = error.message;
+      console.error('Guardado del avance', { status: error.status, code: error.code, error });
       if (state === current) saveStatus(`No se pudo guardar. ${error.message}`, true);
       throw error;
     } finally { current.savePromise = null; }
@@ -81,13 +83,26 @@ function field(key, label, { type = 'text', placeholder = '', required = false, 
   return `<div class="field"><label for="${key}">${label}${required ? ' <span aria-hidden="true">*</span>' : ' <span class="optional">Opcional</span>'}</label><input id="${key}" name="${key}" type="${type}" value="${escape(state.participant[key])}" placeholder="${placeholder}" ${required ? 'required' : ''} ${autocomplete ? `autocomplete="${autocomplete}"` : ''} maxlength="${({ name: 120, email: 254, phone: 30, business: 160, municipality: 120 })[key]}" ${state.errors[key] ? 'aria-invalid="true"' : ''} aria-describedby="error-${key}"><span id="error-${key}" class="field-error">${escape(state.errors[key] ?? '')}</span></div>`;
 }
 
+const meterItems = text => { const items = promptIngredients(text); return `${items.map(item => `<li class="${item.ok ? 'ok' : ''}"><span aria-hidden="true">${item.ok ? '✓' : '○'}</span> ${item.label}<span class="sr-only">${item.ok ? ': incluido' : ': falta'}</span></li>`).join('')}<li class="meter-score">${items.filter(item => item.ok).length}/5</li>`; };
+const compareCards = compare => `<div class="prompt-compare"><figure class="prompt-card basic"><figcaption><span aria-hidden="true">✗</span> Prompt básico</figcaption><p>${escape(compare.basic)}</p></figure><figure class="prompt-card better"><figcaption><span aria-hidden="true">✓</span> Prompt mejorado</figcaption><p>${escape(compare.better)}</p></figure></div>`;
+const agentPromptSection = () => `<section class="question-section agent-prompt-section" id="agent-prompt-section"><p class="eyebrow">TU RESULTADO</p><h2>Tu prompt para el agente de IA</h2><p>Se arma solo con tus respuestas y se actualiza mientras escribes. Cópialo y pégalo en ChatGPT para revisarlo, o directo en WhatsApp Business → Herramientas → Agente de IA.</p><pre class="agent-prompt" id="agent-prompt" tabindex="0">${escape(buildAgentPrompt(state.answers))}</pre><div class="prompt-tools"><button type="button" class="button primary small" data-action="copy-agent">${icon('check')} Copiar prompt</button><button type="button" class="button secondary small" data-action="download-agent">${icon('download')} Descargar .txt</button><a class="text-button" href="https://chatgpt.com/" target="_blank" rel="noopener">Abrir ChatGPT ↗</a></div><p id="agent-status" role="status" class="inline-status"></p></section>`;
+
+function refreshLive(name) {
+  const meter = document.getElementById(`meter-${name}`);
+  if (meter) meter.innerHTML = meterItems(state.answers[name]);
+  const agent = document.getElementById('agent-prompt');
+  if (agent && state.form?.agentPrompt) agent.textContent = buildAgentPrompt(state.answers);
+}
+
 function question(q) {
   const value = state.answers[q.id];
   const error = state.errors[q.id];
   const caption = `${q.number ? `<span class="question-number">${q.number}.</span> ` : ''}${escape(q.label)}${q.required ? ' <span class="required-marker" aria-hidden="true">*</span>' : ''}`;
   let body;
   if (q.type === 'text') {
-    body = `<label for="${q.id}" class="question-label">${caption}</label>${q.hint ? `<p class="field-hint" id="hint-${q.id}">${escape(q.hint)}</p>` : ''}<textarea id="${q.id}" name="${q.id}" rows="3" maxlength="4000" placeholder="Escribe tu respuesta aquí…" ${q.required ? 'required' : ''} ${error ? 'aria-invalid="true"' : ''} aria-describedby="error-${q.id}${q.hint ? ` hint-${q.id}` : ''}">${escape(value)}</textarea>`;
+    body = `<label for="${q.id}" class="question-label">${caption}</label>${q.hint ? `<p class="field-hint" id="hint-${q.id}">${escape(q.hint)}</p>` : ''}<textarea id="${q.id}" name="${q.id}" rows="3" maxlength="4000" placeholder="Escribe tu respuesta aquí…" ${q.required ? 'required' : ''} ${error ? 'aria-invalid="true"' : ''} aria-describedby="error-${q.id}${q.hint ? ` hint-${q.id}` : ''}">${escape(value)}</textarea>${q.builder ? `<div class="prompt-tools"><button type="button" class="button secondary small" data-action="build-prompt" data-target="${q.id}">${icon('spark')} Armar mi prompt</button><button type="button" class="text-button" data-copy-answer="${q.id}">Copiar mi prompt</button></div>` : ''}${q.meter ? `<ul class="prompt-meter" id="meter-${q.id}" aria-label="Ingredientes del prompt">${meterItems(value)}</ul>` : ''}`;
+  } else if (q.type === 'upload') {
+    body = `<p class="question-label" id="label-${q.id}">${icon('download')} ${caption}</p>${q.hint ? `<p class="field-hint">${escape(q.hint)}</p>` : ''}<div class="slot-files" id="slot-${q.id}">${slotContent(q, !state.locked)}</div>`;
   } else if (q.type === 'check') {
     body = `<label class="check-line"><input type="checkbox" name="${q.id}" ${value ? 'checked' : ''}><span>${escape(q.label)}</span></label>`;
   } else {
@@ -101,21 +116,39 @@ function participantContent() {
   return `<p class="eyebrow">PRIMERO, CONOZCÁMONOS</p><h1>Lo que sabes empieza contigo.</h1><p class="intro">Escribe tu nombre para identificar tu entrega. Puedes agregar los datos de tu negocio y una forma de contacto.</p><p class="required-note">Los campos con * son obligatorios.</p><div class="fields-grid">${field('name', 'Nombre completo', { required: true, placeholder: 'Como te gustaría que te llamemos', autocomplete: 'name' })}${field('business', 'Nombre de tu negocio', { placeholder: 'Tu negocio o emprendimiento', autocomplete: 'organization' })}${field('email', 'Correo electrónico', { type: 'email', placeholder: 'tu@correo.com', autocomplete: 'email' })}${field('phone', 'Teléfono / WhatsApp', { type: 'tel', placeholder: 'Ej. 441 123 4567', autocomplete: 'tel' })}${field('municipality', 'Municipio', { placeholder: 'Ej. Jalpan de Serra', autocomplete: 'address-level2' })}</div><div class="privacy-note">${icon('lock')}<p>Solo el equipo que imparte el taller podrá consultar tus datos y tus respuestas. <button type="button" class="text-button" data-action="privacy">Conoce cómo los usamos.</button></p></div>`;
 }
 
+const foldOpen = () => !String(state.participant.name ?? '').trim() || ['name', 'email', 'phone', 'business', 'municipality'].some(key => state.errors[key]);
+const profileFold = () => `<details class="profile-fold" ${foldOpen() ? 'open' : ''}><summary><span>Tus datos</span><small class="fold-summary">${escape(state.participant.name || 'Completa tu nombre')}${state.participant.business ? ` · ${escape(state.participant.business)}` : ''}</small><span class="fold-edit" aria-hidden="true">Editar</span></summary><p class="intro">Estos datos identifican tu entrega. Puedes plegarlos para ir a las preguntas.</p><p class="required-note">Los campos con * son obligatorios.</p><div class="fields-grid">${field('name', 'Nombre completo', { required: true, placeholder: 'Como te gustaría que te llamemos', autocomplete: 'name' })}${field('business', 'Nombre de tu negocio', { placeholder: 'Tu negocio o emprendimiento', autocomplete: 'organization' })}${field('email', 'Correo electrónico', { type: 'email', placeholder: 'tu@correo.com', autocomplete: 'email' })}${field('phone', 'Teléfono / WhatsApp', { type: 'tel', placeholder: 'Ej. 441 123 4567', autocomplete: 'tel' })}${field('municipality', 'Municipio', { placeholder: 'Ej. Jalpan de Serra', autocomplete: 'address-level2' })}</div></details>`;
+
 function answersContent() {
-  return `<p class="eyebrow">${state.form.category}</p><h1>${state.form.title}</h1><p class="intro">${state.form.instructions}</p><div class="activity-meta"><span>${icon('clock')} ${state.form.minutes} min aproximadamente</span><span>${state.form.id === 'diagnostico' ? 'Todas las preguntas son obligatorias.' : 'Puedes dejar en blanco lo que aún no sabes.'}</span></div>${state.form.sections.map((section, i) => `<section class="question-section"><div class="question-section-heading"><span>${String(i + 1).padStart(2, '0')}</span><div><h2>${section.title}</h2>${section.description ? `<p>${section.description}</p>` : ''}</div></div>${section.prompt ? `<blockquote>${escape(section.prompt)}<button type="button" class="text-button copy-prompt" data-prompt="${i}">Copiar prompt</button></blockquote>` : ''}${section.questions.map(question).join('')}</section>`).join('')}<section class="question-section doubts-section"><p class="eyebrow">TU ESPACIO</p><h2>¿Te quedó alguna pregunta?</h2><p>Escribe tus dudas o comentarios para quien imparte el taller. Es opcional.</p><label class="sr-only" for="questions">Tus preguntas para el instructor</label><textarea name="questions" id="questions" maxlength="2000" rows="4" placeholder="Me gustaría saber más sobre…">${escape(state.questions)}</textarea><span class="field-error">${escape(state.errors.questions ?? '')}</span></section><section class="question-section files-section" id="files-section">${filesContent(!state.locked)}</section>`;
+  return `<p class="eyebrow">${state.form.category}</p><h1>${state.form.title}</h1><p class="intro">${state.form.instructions}</p><div class="activity-meta"><span>${icon('clock')} ${state.form.minutes} min aproximadamente</span><span>${state.form.id === 'diagnostico' ? 'Todas las preguntas son obligatorias.' : 'Puedes dejar en blanco lo que aún no sabes.'}</span></div>${profileFold()}${state.form.sections.map((section, i) => `<section class="question-section"><div class="question-section-heading"><span>${String(i + 1).padStart(2, '0')}</span><div><h2>${section.title}</h2>${section.description ? `<p>${section.description}</p>` : ''}</div></div>${section.compare ? compareCards(section.compare) : ''}${section.prompt ? `<blockquote class="prompt-block"><span class="prompt-label">PROMPT PARA COPIAR</span>${escape(section.prompt)}<button type="button" class="text-button copy-prompt" data-prompt="${i}">Copiar prompt</button></blockquote>` : ''}${section.questions.map(question).join('')}</section>`).join('')}${state.form.agentPrompt ? agentPromptSection() : ''}<section class="question-section doubts-section"><p class="eyebrow">TU ESPACIO</p><h2>¿Te quedó alguna pregunta?</h2><p>Escribe tus dudas o comentarios para quien imparte el taller. Es opcional.</p><label class="sr-only" for="questions">Tus preguntas para el instructor</label><textarea name="questions" id="questions" maxlength="2000" rows="4" placeholder="Me gustaría saber más sobre…">${escape(state.questions)}</textarea><span class="field-error">${escape(state.errors.questions ?? '')}</span></section><section class="question-section files-section" id="files-section">${filesContent(!state.locked)}</section>`;
+}
+
+const fileItems = (files, editable) => `<ul class="file-list">${files.map(f => `<li><span class="file-name">${escape(f.name)}</span><small>${escape(formatSize(f.size))}</small><button type="button" class="text-button" data-download-file="${escape(f.id)}">Descargar</button>${editable ? `<button type="button" class="text-button file-remove" data-delete-file="${escape(f.id)}" aria-label="Quitar ${escape(f.name)}">Quitar</button>` : ''}</li>`).join('')}</ul>`;
+const slotFiles = slot => course.files(state.form.id).filter(f => (f.slot ?? null) === slot);
+const hasSlots = () => getQuestions(state.form).some(q => q.type === 'upload');
+
+function slotContent(q, editable) {
+  const files = slotFiles(q.id);
+  const list = files.length ? fileItems(files, editable) : `<p class="file-empty">${editable ? 'Aún no subes este archivo.' : 'Sin archivo.'}</p>`;
+  if (!editable) return list;
+  return `${list}${files.length < fileLimits.perSlot ? `<label class="button secondary file-picker" for="file-${q.id}">${icon('download')} ${files.length ? 'Agregar otra' : 'Subir captura o foto'}</label><input type="file" id="file-${q.id}" class="sr-only slot-file" data-slot="${q.id}" accept="${fileAccept}" aria-describedby="label-${q.id}">` : ''}<p id="file-status-${q.id}" role="status" class="inline-status"></p>`;
 }
 
 function filesContent(editable) {
-  const files = course.files(state.form.id);
-  const list = files.length ? `<ul class="file-list">${files.map(f => `<li><span class="file-name">${escape(f.name)}</span><small>${escape(formatSize(f.size))}</small><button type="button" class="text-button" data-download-file="${escape(f.id)}">Descargar</button>${editable ? `<button type="button" class="text-button file-remove" data-delete-file="${escape(f.id)}" aria-label="Quitar ${escape(f.name)}">Quitar</button>` : ''}</li>`).join('')}</ul>` : `<p class="file-empty">${editable ? 'Aún no adjuntas archivos.' : 'No adjuntaste archivos.'}</p>`;
+  const files = slotFiles(null);
+  const list = files.length ? fileItems(files, editable) : `<p class="file-empty">${editable ? 'Aún no adjuntas archivos.' : 'No adjuntaste archivos.'}</p>`;
   if (!editable) return list;
-  return `<p class="eyebrow">TUS ARCHIVOS</p><h2>Adjunta tu trabajo</h2><p>Sube fotos, capturas, PDF, Word, Excel o PowerPoint de esta actividad. Es opcional. Hasta ${fileLimits.maxFiles} archivos de 5 MB; las fotos grandes se reducen automáticamente.</p>${list}${files.length < fileLimits.maxFiles ? `<label class="button secondary file-picker" for="activity-file">${icon('download')} Agregar archivo</label><input type="file" id="activity-file" class="sr-only" accept="${fileAccept}">` : ''}<p id="file-status" role="status" class="inline-status"></p>`;
+  return `<p class="eyebrow">TUS ARCHIVOS</p><h2>${hasSlots() ? '¿Otro archivo?' : 'Adjunta tu trabajo'}</h2><p>${hasSlots() ? 'Si tienes algo más que compartir, súbelo aquí. Es opcional.' : 'Sube fotos, capturas, PDF, Word, Excel o PowerPoint de esta actividad. Es opcional.'} Hasta ${fileLimits.maxFiles} archivos de 5 MB; las fotos grandes se reducen automáticamente.</p>${list}${files.length < fileLimits.maxFiles ? `<label class="button secondary file-picker" for="activity-file">${icon('download')} Agregar archivo</label><input type="file" id="activity-file" class="sr-only" accept="${fileAccept}">` : ''}<p id="file-status" role="status" class="inline-status"></p>`;
 }
 
-function refreshFiles(message = '', error = false) {
+function refreshFiles(message = '', error = false, slot = null) {
   const section = document.querySelector('#files-section');
   if (section) section.innerHTML = filesContent(!state.locked);
-  const status = document.querySelector('#file-status');
+  for (const q of getQuestions(state.form).filter(item => item.type === 'upload')) {
+    const box = document.querySelector(`#slot-${q.id}`);
+    if (box) box.innerHTML = slotContent(q, !state.locked);
+  }
+  const status = document.querySelector(slot ? `#file-status-${slot}` : '#file-status');
   if (status) { status.textContent = message; status.classList.toggle('save-warning', error); }
 }
 
@@ -149,7 +182,7 @@ function answerText(value) {
 }
 
 function reviewContent() {
-  return `<p class="eyebrow">UN ÚLTIMO VISTAZO</p><h1>Todo listo para compartir.</h1><p class="intro">Revisa tus datos y respuestas. Puedes volver para cambiar lo que necesites antes de enviar.</p><section class="review-section"><div class="review-heading"><h2>Tus datos</h2><button type="button" class="text-button" data-edit="0">Editar datos ↗</button></div><dl class="person-review">${Object.entries({ name: 'Nombre', business: 'Negocio', email: 'Correo', phone: 'Teléfono', municipality: 'Municipio' }).map(([key, label]) => `<div><dt>${label}</dt><dd>${escape(state.participant[key] || 'No indicado')}</dd></div>`).join('')}</dl></section><section class="review-section"><div class="review-heading"><h2>${state.form.title}</h2><button type="button" class="text-button" data-edit="1">Editar respuestas ↗</button></div>${state.form.sections.map(s => `<h3 class="review-subtitle">${s.title}</h3><dl class="answers-review">${s.questions.map(q => `<div><dt>${q.number ? `${q.number}. ` : ''}${escape(q.label)}</dt><dd>${escape(answerText(state.answers[q.id]))}</dd>${extraFields[q.id] && state.answers[extraFields[q.id].id] ? `<dd>${escape(state.answers[extraFields[q.id].id])}</dd>` : ''}</div>`).join('')}</dl>`).join('')}<h3 class="review-subtitle">Tus preguntas para el instructor</h3><p class="review-doubts">${escape(state.questions || 'No agregaste preguntas adicionales.')}</p><h3 class="review-subtitle">Archivos adjuntos</h3>${filesContent(false)}</section><section class="consent-section"><label class="check-line"><input type="checkbox" name="consent" ${state.consent ? 'checked' : ''}><span>Autorizo que el equipo del taller guarde mis datos y respuestas para dar seguimiento a esta actividad.</span></label><button type="button" class="text-button" data-action="privacy">Leer aviso de privacidad</button><span class="field-error">${escape(state.errors.consent ?? '')}</span></section>${!isConfigured(config) ? '<div class="notice" role="status">El formulario todavía no está habilitado para recibir entregas. Puedes revisar y descargar tus respuestas; solicita al instructor que habilite el envío.</div>' : ''}<button type="button" class="text-button download-link" data-action="download">${icon('download')} Descargar mis respuestas</button>`;
+  return `<p class="eyebrow">UN ÚLTIMO VISTAZO</p><h1>Todo listo para compartir.</h1><p class="intro">Revisa tus datos y respuestas. Puedes volver para cambiar lo que necesites antes de enviar.</p><section class="review-section"><div class="review-heading"><h2>Tus datos</h2><button type="button" class="text-button" data-edit="0">Editar datos ↗</button></div><dl class="person-review">${Object.entries({ name: 'Nombre', business: 'Negocio', email: 'Correo', phone: 'Teléfono', municipality: 'Municipio' }).map(([key, label]) => `<div><dt>${label}</dt><dd>${escape(state.participant[key] || 'No indicado')}</dd></div>`).join('')}</dl></section><section class="review-section"><div class="review-heading"><h2>${state.form.title}</h2><button type="button" class="text-button" data-edit="1">Editar respuestas ↗</button></div>${state.form.sections.map(s => `<h3 class="review-subtitle">${s.title}</h3><dl class="answers-review">${s.questions.map(q => `<div><dt>${q.number ? `${q.number}. ` : ''}${escape(q.label)}</dt><dd>${escape(q.type === 'upload' ? slotFiles(q.id).map(f => f.name).join(', ') || 'Sin archivo' : answerText(state.answers[q.id]))}</dd>${extraFields[q.id] && state.answers[extraFields[q.id].id] ? `<dd>${escape(state.answers[extraFields[q.id].id])}</dd>` : ''}</div>`).join('')}</dl>`).join('')}${state.form.agentPrompt ? `<h3 class="review-subtitle">Tu prompt para el agente de IA</h3><pre class="agent-prompt">${escape(buildAgentPrompt(state.answers))}</pre>` : ''}<h3 class="review-subtitle">Tus preguntas para el instructor</h3><p class="review-doubts">${escape(state.questions || 'No agregaste preguntas adicionales.')}</p><h3 class="review-subtitle">${hasSlots() ? 'Archivos adicionales' : 'Archivos adjuntos'}</h3>${filesContent(false)}</section><section class="consent-section"><label class="check-line"><input type="checkbox" name="consent" ${state.consent ? 'checked' : ''}><span>Autorizo que el equipo del taller guarde mis datos y respuestas para dar seguimiento a esta actividad.</span></label><button type="button" class="text-button" data-action="privacy">Leer aviso de privacidad</button><span class="field-error">${escape(state.errors.consent ?? '')}</span></section>${!isConfigured(config) ? '<div class="notice" role="status">El formulario todavía no está habilitado para recibir entregas. Puedes revisar y descargar tus respuestas; solicita al instructor que habilite el envío.</div>' : ''}<button type="button" class="text-button download-link" data-action="download">${icon('download')} Descargar mis respuestas</button>`;
 }
 
 function sheetContent() {
@@ -159,7 +192,7 @@ function sheetContent() {
       ? `<div class="notice edit-notice"><span>Ya entregaste; los cambios actualizan tu entrega</span>. Folio: <code>${escape(state.id)}</code></div>`
       : '';
   const consent = state.locked ? '' : `<section class="consent-section"><label class="check-line"><input type="checkbox" name="consent" ${state.consent ? 'checked' : ''}><span>Autorizo que el equipo del taller guarde mis datos y respuestas para dar seguimiento a esta actividad.</span></label><button type="button" class="text-button" data-action="privacy">Leer aviso de privacidad</button><span class="field-error">${escape(state.errors.consent ?? '')}</span></section>${isConfigured(config) ? '' : '<div class="notice">El formulario todavía no está habilitado para recibir entregas. Puedes revisar y descargar tus respuestas; solicita al instructor que habilite el envío.</div>'}`;
-  return `${notice}<fieldset class="activity-sheet" ${state.locked || state.busy ? 'disabled' : ''}><details class="profile-fold" open><summary>Tus datos</summary><p class="intro">Estos datos identifican tu entrega. Puedes plegarlos para ir a las preguntas.</p><p class="required-note">Los campos con * son obligatorios.</p><div class="fields-grid">${field('name', 'Nombre completo', { required: true, placeholder: 'Como te gustaría que te llamemos', autocomplete: 'name' })}${field('business', 'Nombre de tu negocio', { placeholder: 'Tu negocio o emprendimiento', autocomplete: 'organization' })}${field('email', 'Correo electrónico', { type: 'email', placeholder: 'tu@correo.com', autocomplete: 'email' })}${field('phone', 'Teléfono / WhatsApp', { type: 'tel', placeholder: 'Ej. 441 123 4567', autocomplete: 'tel' })}${field('municipality', 'Municipio', { placeholder: 'Ej. Jalpan de Serra', autocomplete: 'address-level2' })}</div></details>${answersContent()}${consent}</fieldset>`;
+  return `${notice}<fieldset class="activity-sheet" ${state.locked || state.busy ? 'disabled' : ''}>${answersContent()}${consent}</fieldset>`;
 }
 
 function renderForm() {
@@ -182,6 +215,7 @@ function capture(event) {
     const q = getQuestions(state.form).find(q => q.id === name);
     state.answers[name] = q?.type === 'multi' ? Array.from(document.querySelectorAll(`input[name="${name}"]:checked`), input => input.value) : checked;
   } else state.answers[name] = value;
+  refreshLive(name);
   scheduleSave();
 }
 
@@ -195,8 +229,14 @@ async function deliver() {
   state.participant = Object.fromEntries(Object.entries(state.participant).map(([key, value]) => [key, value.trim()]));
   const errors = validateSubmission(payload());
   if (Object.keys(errors).length) {
+    console.warn('Entrega no válida', errors);
     state.errors = errors;
     renderForm();
+    // Si ningún error corresponde a un campo visible, se explica el motivo en lugar de "campos señalados".
+    if (!Object.keys(errors).some(key => document.getElementById(`error-${key}`)?.textContent || (key === 'consent' && document.querySelector('[name="consent"]')))) {
+      state.errors = { ...errors, submit: `No se pudo entregar: ${Object.values(errors).join(' ')}` };
+      renderForm();
+    }
     const key = Object.keys(errors)[0];
     const target = document.getElementById(key) ?? document.querySelector(`#question-${key} textarea, #question-${key} input`) ?? document.querySelector('[name="consent"]');
     target?.focus(); target?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return;
@@ -227,6 +267,7 @@ async function deliver() {
     focusMain();
   } catch (error) {
     current.busy = false;
+    console.error('Entrega de la actividad', { status: error.status, code: error.code, error });
     if (state !== current) return;
     current.errors = { submit: error.message }; renderForm();
     document.querySelector('#form-error').scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -263,8 +304,26 @@ document.addEventListener('click', async event => {
   if (trigger.dataset.action === 'download') download();
   if (trigger.dataset.deleteFile) {
     trigger.disabled = true;
-    try { await course.deleteFile(trigger.dataset.deleteFile); refreshFiles('Archivo quitado.'); }
-    catch (error) { refreshFiles(error.message, true); }
+    const slot = course.files(state.form?.id).find(f => f.id === trigger.dataset.deleteFile)?.slot ?? null;
+    try { await course.deleteFile(trigger.dataset.deleteFile); refreshFiles('Archivo quitado.', false, slot); }
+    catch (error) { refreshFiles(error.message, true, slot); }
+  }
+  if (trigger.dataset.action === 'build-prompt' && state.form && !state.locked) {
+    const target = trigger.dataset.target;
+    state.answers[target] = buildImprovedPrompt(state.answers);
+    const box = document.getElementById(target);
+    if (box) { box.value = state.answers[target]; box.focus(); }
+    refreshLive(target); scheduleSave();
+  }
+  if (trigger.dataset.copyAnswer || trigger.dataset.action === 'copy-agent') {
+    const text = trigger.dataset.copyAnswer ? String(state.answers[trigger.dataset.copyAnswer] ?? '') : buildAgentPrompt(state.answers);
+    try { await navigator.clipboard.writeText(text); trigger.textContent = 'Copiado ✓'; }
+    catch { trigger.textContent = 'Selecciona el texto para copiarlo'; }
+  }
+  if (trigger.dataset.action === 'download-agent' && state.form) {
+    const url = URL.createObjectURL(new Blob([buildAgentPrompt(state.answers)], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `prompt-agente-${(state.answers.a2 || 'mi-negocio').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'mi-negocio'}.txt`; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   if (trigger.dataset.prompt !== undefined) {
     try { await navigator.clipboard.writeText(state.form.sections[Number(trigger.dataset.prompt)].prompt); trigger.textContent = 'Copiado ✓'; }
@@ -314,18 +373,19 @@ async function route() {
   }
 }
 document.addEventListener('change', async event => {
-  if (event.target.id !== 'activity-file' || !event.target.files?.[0] || !state.form || state.locked) return;
+  if ((event.target.id !== 'activity-file' && !event.target.classList?.contains('slot-file')) || !event.target.files?.[0] || !state.form || state.locked) return;
   const file = event.target.files[0];
   const formId = state.form.id;
-  const status = document.querySelector('#file-status');
-  const picker = document.querySelector('.file-picker');
+  const slot = event.target.dataset.slot ?? null;
+  const status = document.querySelector(slot ? `#file-status-${slot}` : '#file-status');
+  const picker = document.querySelector(`label[for="${event.target.id}"]`);
   if (status) { status.textContent = `Subiendo ${file.name}…`; status.classList.remove('save-warning'); }
   picker?.classList.add('is-busy');
   try {
     const prepared = await prepareFile(file);
-    const saved = await course.uploadFile(formId, prepared.name, prepared.type, prepared.base64);
-    if (state.form?.id === formId) refreshFiles(`Archivo guardado en tu cuenta ✓ ${saved.name}`);
-  } catch (error) { if (state.form?.id === formId) refreshFiles(`No se pudo subir. ${error.message}`, true); }
+    const saved = await course.uploadFile(formId, prepared.name, prepared.type, prepared.base64, slot);
+    if (state.form?.id === formId) refreshFiles(`Archivo guardado en tu cuenta ✓ ${saved.name}`, false, slot);
+  } catch (error) { console.error('Subida de archivo', error); if (state.form?.id === formId) refreshFiles(`No se pudo subir. ${error.message}`, true, slot); }
 });
 window.addEventListener('hashchange', route);
 window.addEventListener('beforeunload', event => { if (state.dirty || state.savePromise || state.deliverPromise) event.preventDefault(); });

@@ -11,7 +11,7 @@ export default {
       command: { executable: 'node', args: ['scripts/serve.mjs'], env: { PORT: '{port}' }, log: '.e2e/live/app.log' },
     },
   }],
-  tests: 'tests/live-supabase.spec.ts',
+  tests: 'tests/live-*.spec.ts',
   workers: 1, retries: 0, timeout: 60000, actionTimeout: 15000,
   assertionTimeout: 25000, output: '.e2e/live', reporters: ['list', 'markdown'],
 } satisfies E2EConfig;

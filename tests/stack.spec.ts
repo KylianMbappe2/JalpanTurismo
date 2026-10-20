@@ -100,6 +100,7 @@ test('STACK-01: alumno y docente con usuario y PIN sobre la base real', async ({
   await screen.getByRole('button', 'Crear mi cuenta').tap();
   await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
   await screen.getByRole('row').filter({ hasText: 'Tu agente de IA' }).getByRole('link', 'Comenzar').tap();
+  await screen.getByText('Tus datos', { exact: true }).tap();
   await screen.getByLabel(/Nombre de tu negocio/).fill('Cabañas Prueba');
   await screen.getByTestId('question-a2').getByRole('textbox').fill('Cabañas Prueba en Jalpan');
   await screen.getByLabel(/Agregar archivo/).setInputFiles(['tests/files/plan-de-negocio.pdf']);
@@ -127,8 +128,8 @@ test('STACK-01: alumno y docente con usuario y PIN sobre la base real', async ({
   await expect(screen.getByText('ENTREGA RECIBIDA')).toBeVisible();
   await screen.getByRole('link', /Volver a mi curso/).tap();
   await expect(screen.getByRole('row').filter({ hasText: 'Tu agente de IA' })).toContainText('Entregada');
-  await screen.getByRole('row').filter({ hasText: 'WhatsApp Business' }).getByRole('link', 'Comenzar').tap();
-  await screen.getByTestId('question-w1').getByRole('textbox').fill('Bienvenido: este mensaje sigue en borrador.');
+  await screen.getByRole('row').filter({ hasText: 'Guía para mejorar tus prompts' }).getByRole('link', 'Comenzar').tap();
+  await screen.getByTestId('question-g2').getByRole('textbox').fill('Bienvenido: este mensaje sigue en borrador.');
   await screen.getByRole('button', 'Guardar avance').tap();
   await expect(screen.getByText('Avance guardado en tu cuenta ✓')).toBeVisible();
   await screen.getByRole('link', '← Volver a mi curso', { exact: true }).tap();
@@ -195,8 +196,84 @@ test('STACK-01: alumno y docente con usuario y PIN sobre la base real', async ({
   await expect(screen.getByText('Cabañas Prueba en Jalpan')).toBeVisible();
   await expect(screen.getByRole('listitem').filter({ hasText: 'plan-de-negocio.pdf' })).toBeVisible();
   await screen.getByRole('link', '← Volver al seguimiento').tap();
-  await screen.getByRole('button', `Ana Prueba ${suffix}, WhatsApp Business: En progreso`).tap();
+  await screen.getByRole('button', `Ana Prueba ${suffix}, Guía para mejorar tus prompts: En progreso`).tap();
   await expect(screen.getByText('Bienvenido: este mensaje sigue en borrador.')).toBeVisible();
   await expect(screen.getByText('Todavía no hay una entrega definitiva.')).toBeVisible();
   await app.screenshot('entrega-corregida-en-la-pila');
+});
+
+const activityIds = ['diagnostico', 'guia-prompts', 'chatgpt', 'meta', 'agente-ia', 'pinal-temporadas', 'pinal-competencia', 'pinal-precios', 'pinal-estrategia', 'pinal-cierre'];
+const firstSlot = { 'pinal-temporadas': 't2', 'pinal-competencia': 'k1', 'pinal-precios': 'r4', 'pinal-estrategia': 'e1', 'pinal-cierre': 'z5' };
+
+async function saveOnce(screen, browser, label) {
+  const start = Date.now();
+  await screen.getByRole('button', 'Guardar avance').tap();
+  await expect(screen.getByText('Avance guardado en tu cuenta ✓')).toBeVisible();
+  await expect(screen.getByText('Revisa los campos señalados')).toHaveCount(0);
+  await expect(Date.now() - start < 5000, `${label} guardó en ${Date.now() - start} ms`).toBe(true);
+}
+
+test('HASH-01: cada actividad abierta directo por hash guarda y entrega a la primera; capturas por apartado', { timeout: 240000 }, async ({ app, screen, browser }) => {
+  const student = `qa.hash.${suffix}`;
+  const teacher = `qa.hashdoc.${suffix}`;
+  await realBackend(browser);
+  await app.open('/#registro');
+  await screen.getByLabel('Nombre completo', { exact: true }).fill(`Hash Prueba ${suffix}`);
+  await screen.getByLabel('Nombre de usuario', { exact: true }).fill(student);
+  await screen.getByLabel('PIN', { exact: true }).fill('2468');
+  await screen.getByLabel('Repite tu PIN', { exact: true }).fill('2468');
+  await screen.getByRole('checkbox', /Acepto que se guarden/).check();
+  await screen.getByRole('button', 'Crear mi cuenta').tap();
+  await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
+  await expect(screen.getByRole('row').filter({ hasText: '¿Cuándo vienen los turistas a Pinal?' })).toBeVisible();
+
+  // A) Solo cambia el hash, sin recargar.
+  for (const id of activityIds) {
+    await browser.goto(`/#actividad/${id}`);
+    const box = screen.getByRole('textbox').first();
+    await box.fill(`Respuesta por hash ${id}`);
+    await saveOnce(screen, browser, `hash ${id}`);
+  }
+  // B) Carga nueva directa en la URL de la actividad (como abrirla en otra pestaña).
+  let folio = '';
+  for (const [i, id] of activityIds.entries()) {
+    await browser.goto(`/?carga=${i}#actividad/${id}`);
+    await expect(screen.getByRole('button', 'Guardar avance')).toBeVisible();
+    await screen.getByRole('textbox').first().fill(`Respuesta en carga nueva ${id}`);
+    await saveOnce(screen, browser, `carga ${id}`);
+    if (id === 'diagnostico') continue;
+    if (firstSlot[id]) {
+      await screen.getByTestId(`question-${firstSlot[id]}`).getByLabel(/Subir captura o foto/).setInputFiles(['tests/files/foto-grande.png']);
+      await expect(screen.getByTestId(`question-${firstSlot[id]}`).getByRole('status')).toContainText('Archivo guardado en tu cuenta');
+    }
+    await screen.getByRole('checkbox', /Autorizo que el equipo/).check();
+    const start = Date.now();
+    await screen.getByRole('button', 'Entregar').tap();
+    await expect(screen.getByText('ENTREGA RECIBIDA')).toBeVisible();
+    await expect(Date.now() - start < 8000, `entrega ${id} en ${Date.now() - start} ms`).toBe(true);
+    if (id === 'pinal-temporadas') folio = await browser.evaluate(() => document.querySelector('.receipt code')?.textContent ?? '');
+  }
+  await browser.goto('/?fin=1#curso');
+  for (const title of ['Guía para mejorar tus prompts', '¿Cuándo vienen los turistas a Pinal?', 'Cierre · Mi estrategia turística con IA']) {
+    await expect(screen.getByRole('row').filter({ hasText: title })).toContainText('Entregada');
+  }
+  await screen.getByRole('button', 'Salir', { exact: true }).tap();
+
+  // El admin ve la captura con el nombre de su apartado.
+  await app.open('/#registro');
+  await screen.getByLabel('Nombre completo', { exact: true }).fill('Docente Hash');
+  await screen.getByLabel('Nombre de usuario', { exact: true }).fill(teacher);
+  await screen.getByLabel('PIN', { exact: true }).fill('1122');
+  await screen.getByLabel('Repite tu PIN', { exact: true }).fill('1122');
+  await screen.getByRole('checkbox', /Acepto que se guarden/).check();
+  await screen.getByRole('button', 'Crear mi cuenta').tap();
+  execFileSync('docker', ['exec', container, 'psql', '-U', 'postgres', '-tAc', `select public.course_make_instructor('${teacher}')`]);
+  await screen.getByRole('button', 'Salir', { exact: true }).tap();
+  await enter(screen, teacher, '1122');
+  await expect(screen.getByRole('heading', 'Seguimiento del grupo.')).toBeVisible();
+  await expect(folio).toMatch(/^[0-9a-f-]{36}$/);
+  await browser.goto(`/#entrega/${folio}`);
+  const capture = screen.getByRole('listitem').filter({ hasText: 'foto-grande.jpg' });
+  await expect(capture).toContainText('2. Captura de tu gráfica');
+  await app.screenshot('admin-captura-por-apartado');
 });

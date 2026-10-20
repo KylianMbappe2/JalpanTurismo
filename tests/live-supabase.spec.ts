@@ -17,6 +17,7 @@ test('LIVE-01: usuario y PIN, borrador, archivo y entrega en el Supabase real', 
   await screen.getByRole('button', 'Crear mi cuenta').tap();
   await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
   await screen.getByRole('row').filter({ hasText: 'Tu agente de IA' }).getByRole('link', 'Comenzar').tap();
+  await screen.getByText('Tus datos', { exact: true }).tap();
   await screen.getByLabel(/Nombre de tu negocio/).fill('Registro de verificación de Aula Sierra');
   await screen.getByTestId('question-a2').getByRole('textbox').fill(longAnswer);
   await screen.getByLabel(/Agregar archivo/).setInputFiles(['tests/files/plan-de-negocio.pdf']);

@@ -1,4 +1,4 @@
-import { forms, getQuestions, extraFields } from './forms.js';
+import { forms, getQuestions, extraFields, getAnswerQuestions } from './forms.js';
 
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export function workState(work) {
@@ -51,7 +51,7 @@ export function responsesCsv(records) {
   const rows = [['Folio', 'Fecha', 'Actividad', 'Nombre', 'Correo', 'Teléfono', 'Negocio', 'Municipio', 'Pregunta', 'Respuesta', 'Preguntas al instructor']];
   for (const record of records) {
     const form = forms.find(f => f.id === record.form_id);
-    const questions = form ? getQuestions(form) : [];
+    const questions = form ? getAnswerQuestions(form) : [];
     const entries = questions.length ? questions.flatMap(q => [q, ...(extraFields[q.id] ? [{ ...extraFields[q.id] }] : [])]) : [{ id: '', label: 'Sin respuestas registradas' }];
     for (const q of entries) rows.push([record.id, record.submitted_at, form?.title ?? record.form_id, record.full_name, record.email, record.phone, record.business, record.municipality, q.label, record.answers?.[q.id] ?? '', record.questions]);
   }
@@ -63,7 +63,7 @@ export function downloadText(text, name, type = 'text/plain;charset=utf-8') {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export const fileLimits = { maxBytes: 5 * 1024 * 1024, maxFiles: 5, types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'] };
+export const fileLimits = { maxBytes: 5 * 1024 * 1024, maxFiles: 5, perSlot: 3, types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'] };
 export const fileAccept = 'image/jpeg,image/png,image/webp,application/pdf,text/plain,.docx,.xlsx,.pptx';
 const extensionTypes = { docx: fileLimits.types[5], xlsx: fileLimits.types[6], pptx: fileLimits.types[7], txt: 'text/plain', pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 export const fileType = file => fileLimits.types.includes(file.type) ? file.type : extensionTypes[String(file.name).split('.').pop().toLowerCase()] ?? '';
@@ -171,8 +171,8 @@ export function createCourseData(auth) {
       if (!result?.user?.user_id || !result.state) throw new Error('No pudimos abrir el trabajo de este alumno.');
       return result;
     },
-    async uploadFile(formId, name, type, base64) {
-      const file = await auth.rpc('course_upload_file', { p_form_id: formId, p_name: name, p_mime: type, p_data: base64 });
+    async uploadFile(formId, name, type, base64, slot = null) {
+      const file = await auth.rpc('course_upload_file', { p_form_id: formId, p_name: name, p_mime: type, p_data: base64, ...(slot ? { p_slot: slot } : {}) });
       if (!file?.id || file.form_id !== formId) throw new Error('No recibimos la confirmación del archivo. Inténtalo otra vez.');
       return file;
     },

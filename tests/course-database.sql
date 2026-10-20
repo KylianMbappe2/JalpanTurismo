@@ -18,7 +18,7 @@ begin
   luis := public.course_register('luis','Luis Turismo','5678');
   docente := public.course_register('docente','Docente Sierra','2468');
   result := public.course_load(ana->>'token');
-  if result->>'role' <> 'student' or result->'profile'->>'username' <> 'ana.sierra' or jsonb_array_length(result->'activities') <> 5 then raise exception 'P04: load failed %', result; end if;
+  if result->>'role' <> 'student' or result->'profile'->>'username' <> 'ana.sierra' or jsonb_array_length(result->'activities') <> 10 then raise exception 'P04: load failed %', result; end if;
 
   -- P05-P07: acceso, PIN incorrecto y bloqueo tras cinco intentos.
   if public.course_login(' ANA.SIERRA ','1234')->>'ok' <> 'true' then raise exception 'P05: login failed'; end if;
@@ -127,17 +127,17 @@ begin
   -- F01-F08: archivos adjuntos ligados a la cuenta y a la actividad.
   declare file jsonb; luis_file jsonb; i integer; lt text := public.course_login('luis','7777')->>'token';
   begin
-    luis_file := public.course_upload_file(lt,'whatsapp','foto.jpg','image/jpeg',encode('jpeg-bytes'::bytea,'base64'));
+    luis_file := public.course_upload_file(lt,'chatgpt','foto.jpg','image/jpeg',encode('jpeg-bytes'::bytea,'base64'));
     if luis_file->>'size' <> '10' or luis_file->>'name' <> 'foto.jpg' then raise exception 'F01: upload failed %', luis_file; end if;
     if public.course_download_file(lt,(luis_file->>'id')::uuid)->>'data' <> encode('jpeg-bytes'::bytea,'base64') then raise exception 'F02: download differs'; end if;
-    if public.course_upload_file(lt,'whatsapp','../../a\b.pdf','application/pdf',encode('x'::bytea,'base64'))->>'name' like '%/%' then raise exception 'F03: unsafe name kept'; end if;
+    if public.course_upload_file(lt,'chatgpt','../../a\b.pdf','application/pdf',encode('x'::bytea,'base64'))->>'name' like '%/%' then raise exception 'F03: unsafe name kept'; end if;
     begin perform public.course_download_file(public.course_login('docente','2468')->>'token',(luis_file->>'id')::uuid); exception when others then raise exception 'F04: instructor cannot download'; end;
     begin perform public.course_download_file(public.course_login('ana.sierra','1234')->>'token',(luis_file->>'id')::uuid); raise exception 'F05: another student downloaded'; exception when sqlstate 'PT404' then null; end;
     begin perform public.course_delete_file(public.course_login('ana.sierra','1234')->>'token',(luis_file->>'id')::uuid); raise exception 'F05: another student deleted'; exception when sqlstate 'PT404' then null; end;
-    begin perform public.course_upload_file(lt,'whatsapp','page.html','text/html',encode('<script>'::bytea,'base64')); raise exception 'F06: html accepted'; exception when sqlstate 'PT415' then null; end;
-    begin perform public.course_upload_file(lt,'whatsapp','big.pdf','application/pdf',encode(convert_to(repeat('a',5242881),'UTF8'),'base64')); raise exception 'F06: oversize accepted'; exception when sqlstate 'PT413' then null; end;
-    for i in 1..3 loop perform public.course_upload_file(lt,'whatsapp','n.txt','text/plain',encode('n'::bytea,'base64')); end loop;
-    begin perform public.course_upload_file(lt,'whatsapp','sexto.txt','text/plain',encode('n'::bytea,'base64')); raise exception 'F07: sixth file accepted'; exception when sqlstate 'PT429' then null; end;
+    begin perform public.course_upload_file(lt,'chatgpt','page.html','text/html',encode('<script>'::bytea,'base64')); raise exception 'F06: html accepted'; exception when sqlstate 'PT415' then null; end;
+    begin perform public.course_upload_file(lt,'chatgpt','big.pdf','application/pdf',encode(convert_to(repeat('a',5242881),'UTF8'),'base64')); raise exception 'F06: oversize accepted'; exception when sqlstate 'PT413' then null; end;
+    for i in 1..3 loop perform public.course_upload_file(lt,'chatgpt','n.txt','text/plain',encode('n'::bytea,'base64')); end loop;
+    begin perform public.course_upload_file(lt,'chatgpt','sexto.txt','text/plain',encode('n'::bytea,'base64')); raise exception 'F07: sixth file accepted'; exception when sqlstate 'PT429' then null; end;
     if jsonb_array_length(public.course_load(lt)->'files') <> 5 then raise exception 'F07: files not listed in load'; end if;
     perform public.course_delete_file(lt,(luis_file->>'id')::uuid);
     if jsonb_array_length(public.course_load(lt)->'files') <> 4 then raise exception 'F07: delete failed'; end if;
@@ -167,7 +167,7 @@ begin
   if receipt->>'saved' <> 'true' or receipt->>'id' <> '20000000-0000-4000-8000-000000000001' or receipt->'work'->>'resubmitted_at' is null then raise exception 'E02: resubmit %', receipt; end if;
   result := public.course_student_work(docente,ana_id,'agente-ia');
   if result->>'state' <> 'edited' or result->'response'->>'edit_count' <> '1' or result->'response'->'answers'->>'a2' <> 'Cabañas editadas' or jsonb_array_length(result->'versions') <> 1 or result->'versions'->0->'answers'->>'a2' <> 'Cabañas Ana' then raise exception 'E02: version %', result; end if;
-  if jsonb_array_length(public.course_instructor(docente,0)->'responses') <> 1 or jsonb_array_length(public.course_responses(docente,'["20000000-0000-4000-8000-000000000001"]')) <> 1 then raise exception 'E02: folio duplicated'; end if;
+  if (select count(*) from jsonb_array_elements(public.course_instructor(docente,0)->'responses') r where r->>'id' = '20000000-0000-4000-8000-000000000001') <> 1 or jsonb_array_length(public.course_responses(docente,'["20000000-0000-4000-8000-000000000001"]')) <> 1 then raise exception 'E02: folio duplicated'; end if;
   perform public.course_complete(ana,edited,1);
   result := public.course_student_work(docente,ana_id,'agente-ia');
   if result->'response'->>'edit_count' <> '1' or jsonb_array_length(result->'versions') <> 1 then raise exception 'E03: identical resubmit created a version %', result->'response'; end if;
@@ -214,6 +214,39 @@ begin
   result := public.course_student_work(docente,ana_id,'agente-ia');
   if result->'payload'->'answers'->>'a2' <> 'Cabañas editadas' or result->'versions'->0->'answers'->>'a2' <> 'Cabañas Ana' or result->>'state' <> 'edited' then raise exception 'E08: detail %', result; end if;
 
+  -- S01-S06: prácticas de Pinal con capturas por apartado.
+  declare pt text := public.course_login('luis','7777')->>'token'; shot jsonb; i integer; draft jsonb;
+  begin
+    shot := public.course_upload_file(pt,'pinal-temporadas','grafica.png','image/png',encode('png'::bytea,'base64'),'t2');
+    if shot->>'slot' <> 't2' then raise exception 'S01: slot not stored %', shot; end if;
+    if not exists(select 1 from jsonb_array_elements(public.course_load(pt)->'files') f where f->>'id' = shot->>'id' and f->>'slot' = 't2') then raise exception 'S01: slot missing in load'; end if;
+    begin perform public.course_upload_file(pt,'pinal-temporadas','x.png','image/png',encode('png'::bytea,'base64'),'k1'); raise exception 'S02: slot from another activity accepted'; exception when invalid_parameter_value then null; end;
+    begin perform public.course_upload_file(pt,'pinal-temporadas','x.png','image/png',encode('png'::bytea,'base64'),'t1'); raise exception 'S02: text question used as slot'; exception when invalid_parameter_value then null; end;
+    for i in 1..2 loop perform public.course_upload_file(pt,'pinal-temporadas','otra.png','image/png',encode('png'::bytea,'base64'),'t2'); end loop;
+    begin perform public.course_upload_file(pt,'pinal-temporadas','cuarta.png','image/png',encode('png'::bytea,'base64'),'t2'); raise exception 'S03: fourth file in a slot accepted'; exception when sqlstate 'PT429' then null; end;
+    perform public.course_upload_file(pt,'pinal-temporadas','respuesta.png','image/png',encode('png'::bytea,'base64'),'t3');
+    -- S04: borrador y entrega de una práctica nueva; las capturas no forman parte de las respuestas.
+    draft := '{"id":"40000000-0000-4000-8000-000000000001","form_id":"pinal-temporadas","version":1,"participant":{"name":"Luis Turismo"},"answers":{"t1":"Noviembre","t4":"2x1 en cabañas","t5":"Octubre"},"questions":"","consent":false}';
+    perform public.course_save(pt,draft,1,0);
+    begin perform public.course_save(pt,jsonb_set(draft,'{answers,t2}','"archivo"'),1,1); raise exception 'S04: upload slot accepted as answer'; exception when invalid_parameter_value then null; end;
+    if public.course_complete(pt,jsonb_set(draft,'{consent}','true'),1)->>'saved' <> 'true' then raise exception 'S04: practice not submitted'; end if;
+    -- S05: el docente ve las capturas con su apartado en la entrega.
+    if (select count(*) from jsonb_array_elements(public.course_responses(public.course_login('docente','2468')->>'token','["40000000-0000-4000-8000-000000000001"]')->0->'files') f where f->>'slot' in ('t2','t3')) <> 4 then raise exception 'S05: instructor cannot see practice captures'; end if;
+    -- S06: las cinco prácticas aceptan sus apartados.
+    perform public.course_upload_file(pt,'pinal-competencia','tabla.png','image/png',encode('p'::bytea,'base64'),'k1');
+    perform public.course_upload_file(pt,'pinal-precios','tabla.jpg','image/jpeg',encode('p'::bytea,'base64'),'r8');
+    perform public.course_upload_file(pt,'pinal-estrategia','propuesta.png','image/png',encode('p'::bytea,'base64'),'e1');
+    perform public.course_upload_file(pt,'pinal-cierre','ficha.jpg','image/jpeg',encode('p'::bytea,'base64'),'z5');
+    -- S07: Meta y la guía de prompts aceptan sus capturas; WhatsApp queda oculto sin borrar datos.
+    perform public.course_upload_file(pt,'meta','perfil.png','image/png',encode('p'::bytea,'base64'),'m7');
+    perform public.course_upload_file(pt,'meta','redes.png','image/png',encode('p'::bytea,'base64'),'m8');
+    perform public.course_upload_file(pt,'meta','programada.png','image/png',encode('p'::bytea,'base64'),'m10');
+    perform public.course_upload_file(pt,'guia-prompts','antes.png','image/png',encode('p'::bytea,'base64'),'g9');
+    perform public.course_save(pt,'{"id":"40000000-0000-4000-8000-000000000002","form_id":"guia-prompts","version":1,"participant":{"name":"Luis Turismo"},"answers":{"g1":["El tono"],"g6":"Formal","g8":"Soy dueño de un tour"},"questions":"","consent":false}',1,0);
+    if exists(select 1 from jsonb_array_elements(public.course_load(pt)->'activities') a where a->>'id' = 'whatsapp') then raise exception 'S07: retired WhatsApp visible'; end if;
+    if public.course_load(pt)->'activities'->1->>'id' <> 'guia-prompts' then raise exception 'S07: guide is not activity 2'; end if;
+  end;
+
   -- C23-C25: cierre de sesión y tokens inválidos.
   perform public.course_logout(ana);
   begin perform public.course_load(ana); raise exception 'C23: logout kept the session'; exception when sqlstate 'PT401' then null; end;
@@ -235,7 +268,7 @@ do $$ begin
 end $$;
 reset role;
 rollback;
-\echo P01-P07, C01-C25, F01-F08 y E01-E09 aprobados; datos de prueba revertidos.
+\echo P01-P07, C01-C25, F01-F08, E01-E09 y S01-S07 aprobados; datos de prueba revertidos.
 
 \if :{?reinstall}
 begin;
