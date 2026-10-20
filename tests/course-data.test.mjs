@@ -127,3 +127,12 @@ test('attachments accept documents and photos but never web pages', async () => 
   assert.equal(fileType({ type: 'image/svg+xml', name: 'logo.svg' }), '');
   assert.equal(formatSize(2 * 1048576), '2.0 MB');
 });
+test('old drafts drop removed Meta questions and retired options so they can still be saved', async () => {
+  const { knownAnswers } = await import('../public/course-data.js');
+  const { forms } = await import('../public/forms.js');
+  const meta = forms.find(form => form.id === 'meta');
+  assert.deepEqual(knownAnswers(meta, { m1: 'Messenger', m2: 'Hola', m3: 'Ausente', m4: true, m9: 'Promo de noviembre' }), { m9: 'Promo de noviembre' });
+  assert.deepEqual(knownAnswers(meta, { m1: 'Facebook e Instagram' }), { m1: 'Facebook e Instagram' });
+  const agent = forms.find(form => form.id === 'agente-ia');
+  assert.deepEqual(knownAnswers(agent, { a9: ['Efectivo', 'Bitcoin'], a9_other: 'Vales', zz: 'x' }), { a9: ['Efectivo'], a9_other: 'Vales' });
+});

@@ -109,3 +109,17 @@ test('META-01: Meta pide captura del perfil, de las redes conectadas y de la pub
   }
   await expect(fixture.files.filter(f => f.form_id === 'meta').map(f => f.slot)).toEqual(['m7', 'm8', 'm10']);
 });
+
+test('META-02: sin mensajes automáticos; un borrador viejo con esos datos se abre y guarda sin error', async ({ app, screen, browser }) => {
+  const fixture = await courseFixture(browser);
+  const old = { id: '50000000-0000-4000-8000-000000000001', form_id: 'meta', version: 1, participant: { name: 'Ana Sierra' }, answers: { m1: 'Messenger', m2: 'Hola, bienvenido', m3: 'Volvemos mañana', m4: true }, questions: '', consent: false };
+  fixture.works.set('meta', { user_id: '10000000-0000-4000-8000-000000000001', form_id: 'meta', payload: old, step: 1, revision: 1, status: 'draft', saved_at: new Date().toISOString(), submitted_at: null, response_id: null });
+  await login(app, screen);
+  await screen.getByRole('row').filter({ hasText: 'Meta Business Suite' }).getByRole('link', 'Continuar').tap();
+  await expect(screen.getByText(/mensaje de ausencia|saludo automático|Respuesta automática activa/i)).toHaveCount(0);
+  await screen.getByTestId('question-m1').getByRole('radio', 'Facebook e Instagram').check();
+  await screen.getByTestId('question-m9').getByRole('textbox').fill('Promoción del mar de nubes para el 15 de noviembre');
+  await screen.getByRole('button', 'Guardar avance').tap();
+  await expect(screen.getByText('Avance guardado en tu cuenta ✓')).toBeVisible();
+  await expect(fixture.works.get('meta').payload.answers).toEqual({ m1: 'Facebook e Instagram', m9: 'Promoción del mar de nubes para el 15 de noviembre' });
+});

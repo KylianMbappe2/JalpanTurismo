@@ -63,6 +63,22 @@ export function downloadText(text, name, type = 'text/plain;charset=utf-8') {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// Descarta respuestas de preguntas que ya no existen u opciones retiradas, para que los borradores antiguos sigan guardando.
+export function knownAnswers(form, answers = {}) {
+  const result = {};
+  for (const q of getAnswerQuestions(form)) {
+    const value = answers?.[q.id];
+    if (value !== undefined) {
+      if (q.type === 'radio') { if (q.options.includes(value)) result[q.id] = value; }
+      else if (q.type === 'multi') { const kept = Array.isArray(value) ? value.filter(item => q.options.includes(item)) : []; if (kept.length) result[q.id] = kept; }
+      else result[q.id] = value;
+    }
+    const extra = extraFields[q.id];
+    if (extra && typeof answers?.[extra.id] === 'string') result[extra.id] = answers[extra.id];
+  }
+  return result;
+}
+
 export const fileLimits = { maxBytes: 5 * 1024 * 1024, maxFiles: 5, perSlot: 3, types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'] };
 export const fileAccept = 'image/jpeg,image/png,image/webp,application/pdf,text/plain,.docx,.xlsx,.pptx';
 const extensionTypes = { docx: fileLimits.types[5], xlsx: fileLimits.types[6], pptx: fileLimits.types[7], txt: 'text/plain', pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };

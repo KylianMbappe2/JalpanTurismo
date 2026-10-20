@@ -2,7 +2,7 @@ import { forms, extraFields, getQuestions } from './forms.js';
 import { validateSubmission, isConfigured } from './submission.js';
 import { createCourse } from './course.js';
 import { promptIngredients, buildImprovedPrompt, buildAgentPrompt } from './prompts.js';
-import { fileLimits, fileAccept, fileType, formatSize, activityOpen, closedReason, workFingerprint } from './course-data.js';
+import { knownAnswers, fileLimits, fileAccept, fileType, formatSize, activityOpen, closedReason, workFingerprint } from './course-data.js';
 
 const main = document.querySelector('main');
 const dialog = document.querySelector('#info-dialog');
@@ -354,6 +354,7 @@ async function route() {
       const profile = { name: person.full_name ?? '', email: person.email ?? '', phone: person.phone ?? '', business: person.business ?? '', municipality: person.municipality ?? '' };
       state = { ...emptyState(), form, step: 1, revision: work?.revision ?? 0, savedAt: work?.saved_at ?? null, participant: profile, id: crypto.randomUUID(), ...(work?.payload ?? {}), errors: {} };
       state.participant = { ...profile, ...(work?.payload?.participant ?? {}) };
+      state.answers = knownAnswers(form, state.answers);
       state.submitted = work?.status === 'submitted';
       state.locked = !activityOpen(form);
       state.lockReason = state.locked ? closedReason(form) : '';
@@ -387,6 +388,30 @@ document.addEventListener('change', async event => {
     if (state.form?.id === formId) refreshFiles(`Archivo guardado en tu cuenta ✓ ${saved.name}`, false, slot);
   } catch (error) { console.error('Subida de archivo', error); if (state.form?.id === formId) refreshFiles(`No se pudo subir. ${error.message}`, true, slot); }
 });
+// Avisa cuando se publicó una versión nueva mientras la pestaña seguía abierta.
+const builtVersion = new URL(import.meta.url).searchParams.get('v');
+let updateShown = false;
+async function checkForUpdate() {
+  if (!builtVersion || updateShown) return;
+  try {
+    const latest = (await (await fetch('/config.json', { cache: 'no-store' })).json()).version;
+    if (!latest || latest === builtVersion) return;
+    updateShown = true;
+    const bar = document.createElement('div');
+    bar.className = 'update-banner'; bar.setAttribute('role', 'status');
+    bar.innerHTML = `<span>${icon('spark')} Hay una versión nueva del curso.</span><button type="button" class="button primary small" data-action="apply-update">Actualizar</button>`;
+    document.body.append(bar);
+  } catch { /* Sin conexión: se vuelve a intentar más tarde. */ }
+}
+document.addEventListener('click', async event => {
+  const button = event.target.closest('[data-action="apply-update"]');
+  if (!button) return;
+  button.disabled = true; button.textContent = 'Guardando…';
+  try { if (state.form && !state.locked && (state.dirty || state.savePromise)) await saveDraft(); } catch { /* Si no se pudo guardar, el navegador pedirá confirmar antes de salir. */ }
+  location.reload();
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+setInterval(checkForUpdate, 5 * 60 * 1000);
 window.addEventListener('hashchange', route);
 window.addEventListener('beforeunload', event => { if (state.dirty || state.savePromise || state.deliverPromise) event.preventDefault(); });
 await course.initialize();

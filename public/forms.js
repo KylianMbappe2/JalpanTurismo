@@ -89,26 +89,21 @@ export const forms = [
   },
   {
     id: 'meta', version: 1, number: '04', title: 'Meta Business Suite', short: 'Meta Business',
-    category: 'PRÁCTICA', icon: 'layers', minutes: 30, source: 'Practica_Meta_Business_Suite.pdf',
-    description: 'Configura tu perfil, conecta Facebook e Instagram, programa una publicación y activa tus mensajes automáticos.',
+    category: 'PRÁCTICA', icon: 'layers', minutes: 25, source: 'Practica_Meta_Business_Suite.pdf',
+    description: 'Configura tu perfil, conecta Facebook e Instagram y programa una publicación desde la app.',
     instructions: 'Descarga la app <strong>Meta Business Suite</strong> desde Play Store (Android) o App Store (iPhone) y entra con la cuenta de Facebook de tu negocio. Toma una captura de cada paso y súbela en su espacio.',
     sections: [
       { title: 'Tu perfil configurado', description: 'En la app toca tu negocio → <strong>Editar</strong>. Completa foto, descripción, horario, teléfono, ubicación y botón de contacto.', questions: [
         upload('m7', 1, 'Captura de tu perfil configurado en Meta Business Suite'),
       ] },
       { title: 'Tus redes conectadas', description: 'En <strong>Configuración → Cuentas</strong> revisa que aparezcan tu página de Facebook y tu cuenta de Instagram.', questions: [
-        choice('m1', 2, '¿Qué redes conectaste?', ['Messenger', 'Instagram', 'Ambos', 'No aplica: mi negocio no tiene estas cuentas']),
+        choice('m1', 2, '¿Qué redes conectaste?', ['Facebook', 'Instagram', 'Facebook e Instagram', 'No aplica: mi negocio no tiene estas cuentas']),
         upload('m8', 3, 'Captura de tus redes conectadas'),
       ] },
       { title: 'Programa una publicación', description: 'Toca <strong>Crear → Publicación</strong>, elige Facebook e Instagram, agrega foto y texto, toca <strong>Opciones de programación</strong> y elige una fecha futura. Toma captura en <strong>Planificador</strong>.', questions: [
         text('m9', 4, '¿Qué publicaste y para qué fecha la programaste?'),
         upload('m10', 5, 'Captura de tu publicación programada'),
       ] },
-      { title: 'Mensajes automáticos', description: 'En <strong>Bandeja de entrada → Automatizaciones</strong> activa la respuesta automática y el mensaje de ausencia con los textos de tu WhatsApp.', questions: [
-        text('m2', 6, 'Tu saludo automático', 'Espacio para registrar el texto que preparaste.'),
-        text('m3', 7, 'Tu mensaje de ausencia', 'Espacio para registrar el texto que preparaste.'),
-      ] },
-      { title: 'Prueba', description: 'Escríbele a tu página desde otra cuenta y revisa qué recibes.', questions: [check('m4', 'Respuesta automática activa'), check('m5', 'Mensaje de ausencia activo'), check('m6', 'Subí mis capturas aquí')] },
     ],
   },
   {
