@@ -1,3 +1,11 @@
+## 2026-10-21 · Ilustración en acceso y registro
+
+- Se reutiliza landscape.svg en ambas pantallas: panel lateral en escritorio y franja superior de 104 px en móvil, sin agregar texto promocional.
+- AUTH-01, AUTH-02, AUTH-03, UX-03, BUG-LOGIN y BUG-LIMITS: **12/12 aprobados** entre escritorio y móvil. Acceso correcto/incorrecto, registro, restablecimiento de PIN, límites y ayuda bajo demanda. UX-03 verifica imagen en ambas pantallas, botón de acceso visible a 320 × 740 y ausencia de desbordamiento de 320 a 1440 px.
+- Sitio compilado: **4/4 aprobados**. Build local y QA: 74ed8d6b95.
+- Evidencia: .e2e/illustrated-auth/report.json y .e2e/illustrated-dist/report.json, con capturas revisadas de acceso móvil/escritorio y registro. Backend controlado por fixtures; no se cambió SQL.
+- Archivos: public/course.js (imagen), public/theme.css (composición adaptable), tests/friendly-ui.e2e.ts (verificación visual y tamaños) y este registro.
+
 ## 2026-10-21 · Acceso clásico y pantallas compactas
 
 - UX-01, UX-02 y UX-03: **aprobados** en escritorio y móvil. Accesos a sesiones, ayuda bajo demanda, menú móvil, guardado y formulario de acceso centrado. En 320 × 740, el botón de acceso queda dentro de la primera pantalla.

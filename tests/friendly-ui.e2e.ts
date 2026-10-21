@@ -42,7 +42,8 @@ test('UX-02: controles legibles y navegación móvil sin tapar contenido', async
 test('UX-03: acceso clásico compacto y ayuda de registro bajo demanda', async ({ app, screen, browser }) => {
   await courseFixture(browser); await app.open('/#login');
   await expect(screen.getByRole('heading', 'Iniciar sesión')).toBeVisible();
-  await expect(screen.getByRole('img')).toHaveCount(0);
+  await expect(screen.getByRole('img', 'Montañas y una cabaña de la Sierra Gorda')).toBeVisible();
+  await app.screenshot('login-con-ilustracion');
   await expect(screen.getByText(/máximo 30 caracteres/)).toBeHidden();
   await browser.setViewport({ width: 320, height: 740 });
   expect(await browser.evaluate(() => {
@@ -52,9 +53,15 @@ test('UX-03: acceso clásico compacto y ayuda de registro bajo demanda', async (
   await app.screenshot('login-clasico-movil');
   await screen.getByRole('link', 'Crear cuenta', { exact: true }).tap();
   await expect(screen.getByLabel('Repite tu PIN', { exact: true })).toBeVisible();
+  await expect(screen.getByRole('img', 'Montañas y una cabaña de la Sierra Gorda')).toBeVisible();
   await expect(screen.getByText(/letras sin acentos, números/)).toBeHidden();
   await screen.getByText('¿Qué puedo usar?', { exact: true }).tap();
   await expect(screen.getByText(/letras sin acentos, números/)).toBeVisible();
   await screen.getByText('¿Qué puedo usar?', { exact: true }).tap();
   await app.screenshot('registro-clasico-movil');
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await browser.setViewport({ width, height: 900 });
+    expect(await browser.evaluate(() => document.documentElement.scrollWidth === innerWidth)).toBe(true);
+  }
+  await app.screenshot('registro-con-ilustracion');
 });

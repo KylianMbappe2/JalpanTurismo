@@ -201,8 +201,11 @@ input:not([type=checkbox],[type=radio]),textarea,select{font-size:16px;border-ra
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 /* Pantallas compactas: mostrar la tarea y dejar la ayuda bajo demanda. */
-.auth-layout{display:block;max-width:420px;margin-block:40px}
-.auth-panel{padding:28px}
+.auth-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);max-width:880px;margin-block:40px;border-radius:20px;box-shadow:0 8px 32px #202c3308}
+.auth-illustration{margin:0;padding:32px 24px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:24px;background:#e6f1ea;border-right:1px solid #dce8df}
+.auth-illustration img{display:block;width:100%;height:auto;max-width:380px}
+.auth-illustration figcaption{font-size:13px;color:#456453;letter-spacing:.04em}
+.auth-panel{padding:36px;align-self:center}
 .auth-panel h1{font-size:28px;line-height:1.25;margin:0 0 24px}
 .auth-switch{text-align:center;font-size:14px;margin:24px 0 0;color:var(--muted)}
 .auth-switch a{color:var(--forest);font-weight:600;text-decoration:underline;display:inline-flex;align-items:center;min-height:44px}
@@ -213,7 +216,7 @@ input:not([type=checkbox],[type=radio]),textarea,select{font-size:16px;border-ra
 .pin-help{font-size:14px;margin:0 0 12px}
 body:has(.auth-layout) .site-header nav,body:has(.auth-layout) .course-label{display:none}
 body:has(.auth-layout) .header-inner{justify-content:center}
-body:has(.auth-layout) .site-footer{max-width:420px;padding-top:12px}
+body:has(.auth-layout) .site-footer{max-width:880px;padding-top:12px}
 .learning-summary{padding:20px;gap:24px;margin-bottom:20px}
 .learning-summary h2{font-size:19px;margin:0 0 12px}
 .learning-summary>div:first-child{max-width:none;flex:1;min-width:0}
@@ -244,8 +247,12 @@ body:has(.auth-layout) .site-footer{max-width:420px;padding-top:12px}
 .consent-section>.text-button{font-size:13px;margin-top:0}
 .draft-save-bar{padding:12px 28px}
 @media(max-width:767px){
-  .auth-layout{margin-block:24px}
+  .auth-layout{grid-template-columns:1fr;max-width:440px;margin-block:16px 24px;border-radius:16px}
+  .auth-illustration{padding:8px 16px;border-right:0;border-bottom:1px solid #dce8df}
+  .auth-illustration img{width:auto;height:104px;max-width:100%;object-fit:contain}
+  .auth-illustration figcaption{display:none}
   .auth-panel{padding:24px}
+  body:has(.auth-layout) .site-footer{max-width:440px}
   .auth-panel h1{font-size:26px}
   .learning-summary{display:block;padding:16px}
   .learning-summary h2{font-size:18px}

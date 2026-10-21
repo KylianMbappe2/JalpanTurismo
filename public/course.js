@@ -62,7 +62,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   function showAuth(mode = 'login', message = '') {
     header();
     const signup = mode === 'registro';
-    main.innerHTML = `<section class="auth-layout page-width"><div class="auth-panel">
+    main.innerHTML = `<section class="auth-layout page-width"><figure class="auth-illustration"><img src="/landscape.svg" width="560" height="350" alt="Montañas y una cabaña de la Sierra Gorda"><figcaption>Sierra Gorda · Querétaro</figcaption></figure><div class="auth-panel">
       <h1>${signup ? 'Crear cuenta' : 'Iniciar sesión'}</h1>
       <form id="course-auth" data-mode="${mode}" novalidate>
         ${signup ? '<div class="field"><label for="auth-name">Nombre completo</label><input id="auth-name" name="name" autocomplete="name" maxlength="120" placeholder="Nombre y apellido" required></div>' : ''}
