@@ -199,3 +199,59 @@ input:not([type=checkbox],[type=radio]),textarea,select{font-size:16px;border-ra
   .site-footer .text-button{white-space:normal}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Pantallas compactas: mostrar la tarea y dejar la ayuda bajo demanda. */
+.auth-layout{display:block;max-width:420px;margin-block:40px}
+.auth-panel{padding:28px}
+.auth-panel h1{font-size:28px;line-height:1.25;margin:0 0 24px}
+.auth-switch{text-align:center;font-size:14px;margin:24px 0 0;color:var(--muted)}
+.auth-switch a{color:var(--forest);font-weight:600;text-decoration:underline;display:inline-flex;align-items:center;min-height:44px}
+.input-limit:empty{display:none}
+.username-help{font-size:13px;margin-top:4px;color:var(--muted)}
+.username-help summary,.pin-help summary{cursor:pointer;min-height:44px;align-content:center}
+.username-help p,.pin-help p{margin:4px 0 8px}
+.pin-help{font-size:14px;margin:0 0 12px}
+body:has(.auth-layout) .site-header nav,body:has(.auth-layout) .course-label{display:none}
+body:has(.auth-layout) .header-inner{justify-content:center}
+body:has(.auth-layout) .site-footer{max-width:420px;padding-top:12px}
+.learning-summary{padding:20px;gap:24px;margin-bottom:20px}
+.learning-summary h2{font-size:19px;margin:0 0 12px}
+.learning-summary>div:first-child{max-width:none;flex:1;min-width:0}
+.resume-course{flex-shrink:0}
+.activity-group{margin-bottom:24px}
+.activity-group>.table-heading{padding-bottom:8px}
+.course-page-heading h1{margin:0}
+.student-table tbody tr{padding:16px}
+.form-layout{display:block;max-width:860px;padding-top:20px}
+.form-sidebar{position:static;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.form-sidebar .back-link,.form-sidebar .draft-copy{margin:0}
+.form-content{padding:28px}
+.activity-instructions{font-size:14px;margin:12px 0}
+.activity-instructions summary{cursor:pointer;color:var(--forest);min-height:44px;align-content:center}
+.activity-instructions .intro{margin:8px 0 16px}
+.activity-help{padding:0;border:0;background:transparent;margin-bottom:12px;font-size:14px}
+.activity-help summary{min-height:44px;padding:8px 0;font-weight:500}
+.activity-meta{padding-bottom:12px;margin-bottom:8px}
+.profile-fold{margin-bottom:8px}
+.question-section{padding-top:24px}
+.doubts-section h2,.files-section h2{font-size:20px;margin-bottom:8px}
+.doubts-section .optional,.files-section .optional{font-weight:400;margin-left:8px;font-size:13px}
+.files-section{position:relative}
+.files-section input[type=file]{position:absolute;top:0;left:0}
+.files-section>p:not(.eyebrow){font-size:13px;margin:0 0 12px}
+.consent-section{margin-top:20px}
+.consent-section .check-line{font-size:14px}
+.consent-section>.text-button{font-size:13px;margin-top:0}
+.draft-save-bar{padding:12px 28px}
+@media(max-width:767px){
+  .auth-layout{margin-block:24px}
+  .auth-panel{padding:24px}
+  .auth-panel h1{font-size:26px}
+  .learning-summary{display:block;padding:16px}
+  .learning-summary h2{font-size:18px}
+  .resume-course{margin-top:12px;min-height:44px}
+  .course-page-heading h1{font-size:26px}
+  .form-content{padding:20px 16px}
+  .draft-save-bar{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .form-sidebar{gap:4px;flex-wrap:wrap}
+}

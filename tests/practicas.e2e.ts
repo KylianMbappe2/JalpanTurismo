@@ -101,6 +101,7 @@ test('AGENT-01: el agente de IA junta las respuestas en un prompt que se copia y
 test('META-01: Meta pide captura del perfil, de las redes conectadas y de la publicación programada', async ({ app, screen, browser }) => {
   const fixture = await courseFixture(browser); await login(app, screen);
   await screen.getByRole('row').filter({ hasText: 'Meta Business Suite' }).getByRole('link', 'Comenzar').tap();
+  await screen.getByText('Instrucciones', { exact: true }).tap();
   await expect(screen.getByText(/Play Store \(Android\) o App Store \(iPhone\)/)).toBeVisible();
   for (const [slot, label] of [['m7', 'perfil configurado'], ['m8', 'redes conectadas'], ['m10', 'publicación programada']]) {
     await expect(screen.getByTestId(`question-${slot}`)).toContainText(label);

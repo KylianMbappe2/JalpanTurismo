@@ -1,3 +1,12 @@
+## 2026-10-21 · Acceso clásico y pantallas compactas
+
+- UX-01, UX-02 y UX-03: **aprobados** en escritorio y móvil. Accesos a sesiones, ayuda bajo demanda, menú móvil, guardado y formulario de acceso centrado. En 320 × 740, el botón de acceso queda dentro de la primera pantalla.
+- Regresión de interfaz: **102 casos aprobados** por resultado final (95 de la batería inicial y revalidaciones específicas, más los dos casos nuevos de UX-03). El primer recorrido señaló cinco expectativas de presentación antiguas: las instrucciones y ayuda ahora se despliegan, y el número de actividad pasó a la línea de duración. Se actualizaron sus selectores y pasos conservando las comprobaciones de contenido y límites; META-01, BUG-LIMITS y BUG-NUMBER fueron aprobados al repetirlos.
+- Evidencia por caso: .e2e/compact-verification.json; reportes originales en .e2e/compact-full, compact-auth y compact-changes. Los reportes originales conservan los fallos iniciales.
+- Unitarias: **43/43 aprobadas**. Sitio compilado: **4/4 aprobadas**, .e2e/compact-dist-final/report.json. Build local y copia de QA: 8fac6a62f5.
+- Capturas revisadas: acceso de escritorio, registro móvil de 320 px e inicio móvil con actividades visibles. Pruebas con RPC controladas; no se modificó Supabase ni el contenido de las actividades.
+- Archivos: public/course.js (acceso, registro, progreso y textos), public/app.js (instrucciones, archivos y formulario), public/index.html (marca y pie), public/theme.css (disposición compacta), tres archivos de pruebas, README.md y este registro.
+
 ## 2026-10-20 · Interfaz familiar para participantes sin experiencia técnica
 
 - UX-01: **aprobado** en escritorio y móvil. Saludo, acceso directo a Sesión 2 sin cambiar #curso, foco en su encabezado, ayuda y botón para seguir el curso.

@@ -82,3 +82,5 @@ Verificación de conservación y entregas nuevas en una base temporal: `node scr
 El curso usa tarjetas de actividades, letra del sistema, colores suaves y botones de al menos 44 px. En celular, el menú de actividades y materiales queda abajo; al abrir una actividad aparece su barra de guardado. Los accesos a Sesión 1, Sesión 2 y Extras desplazan y enfocan el encabezado sin cambiar el hash ni recargar el curso.
 
 La ayuda desplegable explica guardar, entregar y copiar un mensaje para la IA. El contenido de las actividades y las reglas de acceso, validación y guardado se conservan. Este cambio de interfaz no necesita SQL nuevo. Pruebas: `tests/friendly-ui.e2e.ts`, junto con la batería existente.
+
+El acceso y el registro usan un formulario centrado sin contenido promocional. Las instrucciones y ayudas se abren bajo demanda; los contadores aparecen al alcanzar el límite. El curso muestra el avance de forma compacta y el formulario ocupa una sola columna, con archivos opcionales y barra de guardado. No requiere migración SQL.

@@ -158,6 +158,7 @@ test('BUG-SUBMIT: si se pierde la respuesta después del commit se recupera el f
 
 test('BUG-LIMITS: el registro explica los caracteres permitidos y anuncia los límites', async ({ app, screen, browser }) => {
   await courseFixture(browser); await app.open('/#registro');
+  await screen.getByText('¿Qué puedo usar?', { exact: true }).tap();
   await expect(screen.getByText(/letras sin acentos, números, punto, guion o guion bajo/)).toBeVisible();
   await screen.getByLabel('Nombre de usuario', { exact: true }).fill('a'.repeat(30));
   await expect(screen.getByText(/30\s*\/\s*30/)).toBeVisible();
@@ -190,7 +191,7 @@ test('BUG-NUMBER: WhatsApp ya no aparece y la guía de prompts es la actividad 0
   await courseFixture(browser); await login(app, screen);
   await expect(screen.getByRole('row').filter({ hasText: 'WhatsApp Business' })).toHaveCount(0);
   await screen.getByRole('row').filter({ hasText: 'Guía para mejorar tus prompts' }).getByRole('link', 'Comenzar').tap();
-  await expect(await browser.evaluate(() => document.querySelector('.form-sidebar .eyebrow')?.textContent)).toBe('ACTIVIDAD 02');
+  await expect(screen.getByText('Actividad 02 · 30 min', { exact: true })).toBeVisible();
   await expect(screen.getByTestId('question-g3')).toContainText('3. ¿Quién eres?');
   await browser.goto('/#actividad/whatsapp');
   await expect(screen.getByRole('heading', 'Actividad no encontrada')).toBeVisible();

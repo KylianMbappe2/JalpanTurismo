@@ -4,7 +4,7 @@ import { courseFixture, login } from './course-fixture.ts';
 
 test('UX-01: acceso directo a sesiones sin cambiar ruta y ayuda en palabras sencillas', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
-  await expect(screen.getByRole('heading', 'Hola, Ana')).toBeVisible();
+  await expect(screen.getByRole('heading', 'Mis actividades')).toBeVisible();
   await screen.getByRole('button', 'Ir a Sesión 2').tap();
   await expect(browser).toHaveURL(/#curso$/);
   expect(await browser.evaluate(() => document.activeElement?.id)).toBe('group-session2');
@@ -36,4 +36,25 @@ test('UX-02: controles legibles y navegación móvil sin tapar contenido', async
   await screen.getByRole('button', 'Guardar avance', { exact: true }).tap();
   await expect(screen.getByText('Avance guardado en tu cuenta ✓')).toBeVisible();
   expect(await browser.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth, overflowing: [...document.querySelectorAll('body *')].filter(el => el.getBoundingClientRect().right > innerWidth + 1).map(el => ({ tag: el.tagName, class: el.className, right: el.getBoundingClientRect().right })) }))).toEqual({ width: 390, scroll: 390, overflowing: [] });
+});
+
+
+test('UX-03: acceso clásico compacto y ayuda de registro bajo demanda', async ({ app, screen, browser }) => {
+  await courseFixture(browser); await app.open('/#login');
+  await expect(screen.getByRole('heading', 'Iniciar sesión')).toBeVisible();
+  await expect(screen.getByRole('img')).toHaveCount(0);
+  await expect(screen.getByText(/máximo 30 caracteres/)).toBeHidden();
+  await browser.setViewport({ width: 320, height: 740 });
+  expect(await browser.evaluate(() => {
+    const button = document.querySelector('.auth-submit').getBoundingClientRect();
+    return button.bottom <= innerHeight && document.documentElement.scrollWidth === innerWidth;
+  })).toBe(true);
+  await app.screenshot('login-clasico-movil');
+  await screen.getByRole('link', 'Crear cuenta', { exact: true }).tap();
+  await expect(screen.getByLabel('Repite tu PIN', { exact: true })).toBeVisible();
+  await expect(screen.getByText(/letras sin acentos, números/)).toBeHidden();
+  await screen.getByText('¿Qué puedo usar?', { exact: true }).tap();
+  await expect(screen.getByText(/letras sin acentos, números/)).toBeVisible();
+  await screen.getByText('¿Qué puedo usar?', { exact: true }).tap();
+  await app.screenshot('registro-clasico-movil');
 });
