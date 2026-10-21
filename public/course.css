@@ -284,6 +284,11 @@
 .files-section .save-warning{color:var(--error)}
 .saving-spinner { width: 1em; height: 1em; flex: 0 0 auto; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: saving-spin .8s linear infinite; }
 .input-limit { display: block; }
+.course-activities > .table-heading { padding: 0 0 18px; border: 0; }
+.activity-group { margin-bottom: 20px; }
+.activity-group .table-heading h3 { font-family: var(--display, Georgia, serif); font-size: 24px; line-height: 1.25; margin: 0 0 6px; }
+.full-session-prompt summary { cursor: pointer; color: var(--forest); font-weight: 600; padding: 12px 0; min-height: 44px; }
+.full-session-prompt .prompt-block { white-space: pre-wrap; overflow-wrap: anywhere; }
 @keyframes saving-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .saving-spinner { animation: none; } }
 .slot-files{margin-top:6px}

@@ -1,5 +1,24 @@
 # Verificación · entregas editables y seguimiento · 20 de octubre de 2026 UTC
 
+## Sesión 2 de hoy y Extras
+
+| Caso | Estado | Evidencia |
+| --- | --- | --- |
+| SESSION-01 | Aprobado | Tres secciones, 5 actividades de sesión 1, 3 nuevas y 5 extras. Sin desbordamiento a 320, 390, 768 y 1440 px; captura móvil `sesiones-y-extras` |
+| SESSION-02 | Aprobado | Prompt completo copiado con sus tres partes y regla “No encontrado”; evidencia adjunta, borrador tras recarga, entrega editable y apertura de competencia/calendario |
+| SESSION-03 | Aprobado | Un borrador anterior se abre desde Extras con las respuestas y dudas intactas |
+| SESSION-04 | Aprobado | El docente consulta respuestas, dudas y archivo de una actividad nueva |
+| Sesión 1 intacta | Aprobado | Huella SHA-256 del contenido de sus cinco actividades idéntica al estado anterior: 23fcbd18fafcc98fe02fcbc404eeefa4a2c06f814bb9e3a84ca5cc4a28e6c6e8 |
+| SESSION-SQL-01 | Aprobado | Tras actualizar se conservan sesión 1, usuarios, sesiones, borrador posterior a entrega, entrega oficial y archivo previo; comparación fila por fila |
+| SESSION-SQL-02 | Aprobado | Migración 006 aplicada dos veces; solo tres actividades nuevas, sin perder publicación, fecha y bloqueo elegidos por el instructor |
+| SESSION-SQL-03 | Aprobado | Las tres actividades aceptan entregas y archivos; reintentos conservan folio y el trabajo/archivo de Extras sigue presente |
+| Regresión e2e | Aprobado | 96/96 en móvil y escritorio, ejecución 01a15bda-dc7c-7a17-9211-00e0eb239bae; `.e2e/sessions-full/report.json` |
+| Versión compilada | Aprobado | 4/4, ejecución 01a15be3-27ab-7aeb-8799-93fcf192c3f6; `.e2e/sessions-dist/report.json` |
+| Unitarias y build | Aprobado | 43/43 y compilación correcta; versión 0c6f91a111 |
+| Activación en Supabase de producción | Bloqueado hasta ejecutar el SQL | Archivo listo en `~/Desktop/sql jalpan/04_Actividades_de_hoy_Sesion_2.sql`; no se ejecutó SQL de producción desde esta sesión |
+
+El avance del alumno excluye los extras, que siguen abiertos, editables según publicación y revisables por el docente. No se cambió el contenido de la sesión 1, ni las validaciones, permisos, PIN, funciones de autenticación o RPC. La migración estrecha solo agrega definiciones y cambia el orden de las cinco prácticas anteriores. El instalador completo del escritorio también está actualizado. Se probaron los SQL con PostgreSQL 17 aislado, sin modificar datos de producción.
+
 ## Correcciones de guardado, acceso y navegación
 
 Versión verificada con e2e 0.21.2 en Chromium de escritorio y móvil. Se conservan diseño, validaciones, escape de HTML, permisos SQL, revisión optimista y bloqueo por intentos de PIN. No requiere instalar SQL nuevo.

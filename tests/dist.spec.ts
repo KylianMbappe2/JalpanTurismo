@@ -2,13 +2,15 @@ import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
 import { courseFixture, login } from './course-fixture.ts';
 
-test('DIST-01: el sitio compilado carga las 10 actividades igual en PC y celular, con URL versionadas', async ({ app, screen, browser }) => {
+test('DIST-01: el sitio compilado carga las sesiones y extras igual en PC y celular, con URL versionadas', async ({ app, screen, browser }) => {
   const fixture = await courseFixture(browser);
   await browser.unroute('**/config.json');
   const config = await (await fetch(new URL('/config.json', app.baseUrl))).json();
   await browser.route('**/config.json', route => route.fulfill({ json: { ...config, supabaseUrl: 'https://qa.supabase.co', supabaseKey: 'sb_publishable_public_test_key' } }));
   await login(app, screen);
-  await expect(screen.getByRole('table').getByRole('row')).toHaveCount(11);
+  await expect(screen.getByRole('region', 'Sesión 1').getByRole('row')).toHaveCount(6);
+  await expect(screen.getByRole('region', 'Sesión 2 · Actividades de hoy').getByRole('row')).toHaveCount(4);
+  await expect(screen.getByRole('region', 'Extras').getByRole('row')).toHaveCount(6);
   for (const title of ['Guía para mejorar tus prompts', '¿Cuándo vienen los turistas a Pinal?', 'Cierre · Mi estrategia turística con IA']) await expect(screen.getByRole('row').filter({ hasText: title })).toBeVisible();
   await expect(screen.getByRole('row').filter({ hasText: 'WhatsApp Business' })).toHaveCount(0);
   const urls = await browser.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(name => /\.(js|css)(\?|$)/.test(name) && name.startsWith(location.origin)));

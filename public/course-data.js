@@ -1,4 +1,5 @@
 import { forms, getQuestions, extraFields, getAnswerQuestions } from './forms.js';
+import { activityGroup } from './activity-groups.js';
 
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export function workState(work) {
@@ -34,7 +35,7 @@ export function trackingCsv(matrix) {
   return '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
 }
 export function courseProgress(activities, work) {
-  const published = activities.filter(a => a.is_published !== false);
+  const published = activities.filter(a => a.is_published !== false && activityGroup(a) !== 'extras');
   const completed = published.filter(a => work.some(w => w.form_id === a.id && w.status === 'submitted')).length;
   return { completed, total: published.length, percent: published.length ? Math.round(completed / published.length * 100) : 0 };
 }

@@ -18,7 +18,7 @@ begin
   luis := public.course_register('luis','Luis Turismo','5678');
   docente := public.course_register('docente','Docente Sierra','2468');
   result := public.course_load(ana->>'token');
-  if result->>'role' <> 'student' or result->'profile'->>'username' <> 'ana.sierra' or jsonb_array_length(result->'activities') <> 10 then raise exception 'P04: load failed %', result; end if;
+  if result->>'role' <> 'student' or result->'profile'->>'username' <> 'ana.sierra' or jsonb_array_length(result->'activities') <> 13 then raise exception 'P04: load failed %', result; end if;
 
   -- P05-P07: acceso, PIN incorrecto y bloqueo tras cinco intentos.
   if public.course_login(' ANA.SIERRA ','1234')->>'ok' <> 'true' then raise exception 'P05: login failed'; end if;
