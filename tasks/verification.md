@@ -1,3 +1,14 @@
+## 2026-10-20 · Interfaz familiar para participantes sin experiencia técnica
+
+- UX-01: **aprobado** en escritorio y móvil. Saludo, acceso directo a Sesión 2 sin cambiar #curso, foco en su encabezado, ayuda y botón para seguir el curso.
+- UX-02: **aprobado** en escritorio y móvil. Navegación inferior, materiales, ayuda de guardado y borrador; controles de al menos 44 px y sin desplazamiento horizontal en 320, 390, 768, 1024 y 1440 px. Se detectó y corrigió el desbordamiento de los selectores de archivo ocultos.
+- Batería e2e completa: **100/100 aprobadas**, run 01a15bf0-0966-7825-8658-4a7f08e1ed49. Incluye registro, acceso, bloqueo, rutas, entregas largas, doble clic, edición, archivos, sesiones y panel docente. Evidencia: .e2e/ux-full/report.json y capturas en results/.
+- Sitio compilado: **4/4 aprobadas**, run 01a15bf0-84a4-72bb-965c-c748f92514c0. Versionado y actualización de pestaña con avance conservado. Evidencia: .e2e/ux-dist/report.json.
+- Unitarias: **43/43 aprobadas**. Build local y copia de QA: f45b4e51ef.
+- Revisión visual: acceso en móvil y escritorio, inicio móvil, formulario móvil y panel docente.
+- Las pruebas de interfaz usan el servidor local y respuestas controladas en la frontera RPC. No son una nueva prueba live de Supabase; este cambio no modifica SQL ni datos. La activación pendiente de las actividades nuevas sigue documentada en la sección anterior.
+- Archivos: public/theme.css (tema y adaptación móvil), public/styles.css (fuente externa retirada), public/index.html (color y área segura del celular), public/course.js (accesos a sesiones, navegación y textos), public/app.js (ayuda y explicación del prompt), tests/friendly-ui.e2e.ts, README.md y este registro.
+
 # Verificación · entregas editables y seguimiento · 20 de octubre de 2026 UTC
 
 ## Sesión 2 de hoy y Extras

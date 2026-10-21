@@ -76,3 +76,9 @@ Cada actividad nueva incluye el prompt completo proporcionado para Pinal de Amol
 Para actualizar un Supabase que ya funciona, ejecutar **`supabase/migrations/006_sesion_dos.sql`**. Es aditivo e idempotente: agrega el catálogo nuevo y ordena las prácticas anteriores; no cambia usuarios, PIN, trabajos o archivos ni las decisiones existentes de publicación, fechas o bloqueo. `pnpm schema` genera esta migración y el instalador completo `supabase/setup.sql`. El escritorio contiene la copia `sql jalpan/04_Actividades_de_hoy_Sesion_2.sql`; después de ejecutarla, pulsar **Actualizar** en el curso. La interfaz no concede acceso a actividades que el servidor todavía no conoce.
 
 Verificación de conservación y entregas nuevas en una base temporal: `node scripts/verify-sessions.mjs` (requiere el contenedor PostgreSQL `aula-pin-qa`, configurable con `STACK_DB_CONTAINER`). Los resultados se guardan en `.e2e/session-migration.txt`.
+
+## Interfaz para participantes sin experiencia técnica
+
+El curso usa tarjetas de actividades, letra del sistema, colores suaves y botones de al menos 44 px. En celular, el menú de actividades y materiales queda abajo; al abrir una actividad aparece su barra de guardado. Los accesos a Sesión 1, Sesión 2 y Extras desplazan y enfocan el encabezado sin cambiar el hash ni recargar el curso.
+
+La ayuda desplegable explica guardar, entregar y copiar un mensaje para la IA. El contenido de las actividades y las reglas de acceso, validación y guardado se conservan. Este cambio de interfaz no necesita SQL nuevo. Pruebas: `tests/friendly-ui.e2e.ts`, junto con la batería existente.
