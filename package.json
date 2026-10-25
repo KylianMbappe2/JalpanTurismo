@@ -13,5 +13,6 @@
     "schema": "node scripts/schema.mjs"
   },
   "devDependencies": { "e2e": "0.21.2", "@e2e-dev/web": "0.15.2" },
-  "pnpm": { "onlyBuiltDependencies": [] }
+  "pnpm": { "onlyBuiltDependencies": [] },
+  "dependencies": { "pdfjs-dist": "6.4.299" }
 }

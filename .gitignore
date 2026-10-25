@@ -8,3 +8,4 @@ dist/
 .openai/hosting.json
 .vercel/
 *.zip
+public/vendor/pdfjs/
