@@ -4,7 +4,8 @@ import { forms, getQuestions, getAnswerQuestions, extraFields } from './forms.js
 import { buildAgentPrompt } from './prompts.js';
 import { activityGroup, groupedActivities } from './activity-groups.js';
 import { adminNavigation, adminSummary, adminProfile, teacherSummary } from './admin-ui.js';
-import { mountPdfViewer } from './pdf-viewer.js';
+import { presentations } from './presentations.js';
+import { classListMarkup, mountClassLibrary } from './presentation-viewer.js';
 
 export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   const auth = createAuth(config);
@@ -152,16 +153,8 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   }
 
   function materials() {
-    const presentations = [
-      ['1_Temas_I_y_II_IA_y_Chatbots.pdf', 'Temas I y II · IA y chatbots'],
-      ['2_Tema_III_Tendencias_y_precios.pdf', 'Tema III · Tendencias y precios'],
-      ['3_Tema_IV_Clase_1_Contenido_para_redes.pdf', 'Tema IV · Clase 1 · Contenido para redes'],
-      ['4_Tema_IV_Clase_2_Perfiles_turisticos.pdf', 'Tema IV · Clase 2 · Perfiles turísticos'],
-      ['5_Tema_IV_Clase_3_Tu_perfil_en_vivo.pdf', 'Tema IV · Clase 3 · Tu perfil en vivo'],
-    ];
-    const preview = `<section aria-label="Visor de presentaciones"><h2>Presentaciones</h2><div class="pdf-viewer"><label class="pdf-selector">Presentación<select>${presentations.map(([, title], i) => `<option value="${i}">${e(title)}</option>`).join('')}</select></label><div class="pdf-toolbar"><div class="pdf-controls"><button class="button secondary" type="button" data-pdf="previous" aria-label="Página anterior" disabled>← Anterior</button><p role="status" aria-live="polite">Cargando presentación…</p><button class="button secondary" type="button" data-pdf="next" aria-label="Página siguiente" disabled>Siguiente →</button></div><div class="pdf-controls"><button class="button secondary" type="button" data-pdf="out" aria-label="Alejar" disabled>−</button><button class="button secondary" type="button" data-pdf="fit" disabled>Ajustar al ancho</button><button class="button secondary" type="button" data-pdf="in" aria-label="Acercar" disabled>+</button></div></div><div class="pdf-error" role="alert" hidden><p>No se pudo mostrar la presentación. Puedes reintentar o abrir el PDF original.</p><button class="button secondary" type="button" data-pdf="retry">Reintentar</button></div><div class="pdf-stage" tabindex="0" role="group" aria-label="Página de la presentación" aria-busy="true"></div><p id="pdf-page-text" class="pdf-page-text sr-only"></p><div class="pdf-links"><a href="/materiales/${presentations[0][0]}" target="_blank" rel="noopener">Abrir PDF <span aria-hidden="true">↗</span></a><a href="/materiales/${presentations[0][0]}" download>Descargar PDF</a></div></div></section>`;
-    shell(`<div class="course-page-heading"><div><h1>Materiales del curso.</h1></div></div>${preview}<section class="materials-guides" aria-labelledby="guides-heading"><h2 id="guides-heading">Guías y ejemplos</h2><div class="resource-list">${forms.filter(f => f.source && !f.retired).map(f => `<a class="resource-item" href="/materiales/${f.source}" target="_blank" rel="noopener"><span class="table-activity-icon">${icon(f.icon)}</span><div><h3>${e(f.title)}</h3><p>Guía de la actividad · PDF</p></div><span aria-hidden="true">↗</span></a>`).join('')}<a class="resource-item" href="/materiales/Ejemplo_lleno_Agente_IA.pdf" target="_blank" rel="noopener"><span class="table-activity-icon">${icon('bot')}</span><div><h3>Un ejemplo de agente de IA</h3><p>Cuestionario y prompt de referencia. Sus datos son inventados.</p></div><span aria-hidden="true">↗</span></a></div></section>`, 'materiales');
-    disposePreview = mountPdfViewer(main.querySelector('.pdf-viewer'), presentations);
+    shell(`<div class="course-page-heading"><div><h1>Materiales del curso.</h1></div></div>${classListMarkup(presentations)}<section class="materials-guides" aria-labelledby="guides-heading"><h2 id="guides-heading">Guías y ejemplos</h2><div class="resource-list">${forms.filter(f => f.source && !f.retired).map(f => `<a class="resource-item" href="/materiales/${f.source}" target="_blank" rel="noopener"><span class="table-activity-icon">${icon(f.icon)}</span><div><h3>${e(f.title)}</h3><p>Guía de la actividad · PDF</p></div><span aria-hidden="true">↗</span></a>`).join('')}<a class="resource-item" href="/materiales/Ejemplo_lleno_Agente_IA.pdf" target="_blank" rel="noopener"><span class="table-activity-icon">${icon('bot')}</span><div><h3>Un ejemplo de agente de IA</h3><p>Cuestionario y prompt de referencia. Sus datos son inventados.</p></div><span aria-hidden="true">↗</span></a></div></section>`, 'materiales');
+    disposePreview = mountClassLibrary(main.querySelector('.class-library'), presentations);
   }
 
   const filteredResponses = () => (teacher?.responses ?? []).filter(r => (!activityFilter || r.form_id === activityFilter) && (!onlyQuestions || r.questions?.trim()) && [r.full_name, r.business, r.email].some(value => String(value ?? '').toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))));

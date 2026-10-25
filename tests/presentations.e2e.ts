@@ -2,12 +2,17 @@ import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
 import { courseFixture, login } from './course-fixture.ts';
 
+const titles = ['IA y chatbots', 'Tendencias y precios', 'Contenido para redes', 'Perfiles turísticos', 'Tu perfil en vivo'];
+
 test('PDF-01: las cinco presentaciones se leen dentro del curso, con páginas y zoom en PC y celular', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
   await screen.getByRole('link', 'Materiales del curso', { exact: true }).tap();
+  await expect(screen.getByRole('region', 'Clases del curso')).toBeVisible();
+  await expect(screen.getByRole('button', /^Ver clase \d:/)).toHaveCount(5);
+  await app.screenshot('clases-del-curso');
+  await screen.getByRole('button', 'Ver clase 1: IA y chatbots', { exact: true }).tap();
   const viewer = screen.getByRole('region', 'Visor de presentaciones');
   await expect(viewer).toBeVisible();
-  await expect(screen.getByLabel('Presentación', { exact: true }).getByRole('option')).toHaveCount(5);
   await expect(screen.getByRole('status').filter({ hasText: 'Página 1 de' })).toBeVisible();
   await expect(screen.getByRole('button', 'Página anterior', { exact: true })).toBeDisabled();
   await screen.getByRole('button', 'Página siguiente', { exact: true }).tap();
@@ -15,27 +20,48 @@ test('PDF-01: las cinco presentaciones se leen dentro del curso, con páginas y 
   await screen.getByRole('button', 'Acercar', { exact: true }).tap();
   await expect(screen.getByRole('button', 'Ajustar al ancho', { exact: true })).toBeEnabled();
   await screen.getByRole('button', 'Ajustar al ancho', { exact: true }).tap();
-  for (const value of ['1', '2', '3', '4']) {
-    await screen.getByLabel('Presentación', { exact: true }).selectOption({ value });
+  for (let i = 1; i < titles.length; i++) {
+    await screen.getByRole('button', 'Todas las clases', { exact: true }).tap();
+    await screen.getByRole('button', `Ver clase ${i + 1}: ${titles[i]}`, { exact: true }).tap();
     await expect(screen.getByRole('status').filter({ hasText: 'Página 1 de' })).toBeVisible();
     await expect(screen.getByRole('button', 'Página anterior', { exact: true })).toBeDisabled();
   }
   await expect(viewer.getByRole('link', 'Abrir PDF', { exact: true })).toHaveAttribute('href', '/materiales/5_Tema_IV_Clase_3_Tu_perfil_en_vivo.pdf');
   const fits = await browser.evaluate(() => {
-    const canvas = document.querySelector('.pdf-stage canvas') as HTMLCanvasElement;
-    return canvas.width > 0 && canvas.height > 0 && document.documentElement.scrollWidth <= window.innerWidth;
+    const slide = document.querySelector('.pdf-stage img') as HTMLImageElement;
+    return slide.complete && slide.naturalWidth > 0 && document.documentElement.scrollWidth <= window.innerWidth;
   });
   await expect(fits).toBe(true);
-  await app.screenshot('visor-presentaciones');
+  await app.screenshot('visor-por-clase');
 });
 
-test('PDF-02: un PDF que no carga ofrece reintento y acceso al archivo original', async ({ app, screen, browser }) => {
+test('PDF-02: una vista que no carga ofrece reintento y acceso al archivo original', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
-  await browser.route('**/materiales/1_Temas_I_y_II_IA_y_Chatbots.pdf', route => route.fulfill({ status: 503, body: 'Sin conexión' }));
+  await browser.route('**/materiales/clases/**/page-001*.webp', route => route.fulfill({ status: 503, body: 'Sin conexión' }));
   await screen.getByRole('link', 'Materiales del curso', { exact: true }).tap();
+  await screen.getByRole('button', 'Ver clase 1: IA y chatbots', { exact: true }).tap();
   await expect(screen.getByRole('alert')).toContainText('No se pudo mostrar');
   await expect(screen.getByRole('link', 'Abrir PDF', { exact: true })).toBeVisible();
-  await browser.unroute('**/materiales/1_Temas_I_y_II_IA_y_Chatbots.pdf');
+  await browser.unroute('**/materiales/clases/**/page-001*.webp');
   await screen.getByRole('button', 'Reintentar', { exact: true }).tap();
   await expect(screen.getByRole('status').filter({ hasText: 'Página 1 de' })).toBeVisible();
+});
+
+test('PDF-03: las clases y el zoom se adaptan a pantallas de 320, 768 y 1024 px', async ({ app, screen, browser }) => {
+  await courseFixture(browser); await login(app, screen);
+  await screen.getByRole('link', 'Materiales del curso', { exact: true }).tap();
+  for (const width of [320, 768, 1024]) {
+    await browser.setViewport({ width, height: 900 });
+    await expect(screen.getByRole('button', 'Ver clase 1: IA y chatbots', { exact: true })).toBeVisible();
+    await expect(await browser.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await screen.getByRole('button', 'Ver clase 1: IA y chatbots', { exact: true }).tap();
+    await expect(screen.getByRole('status').filter({ hasText: 'Página 1 de' })).toBeVisible();
+    await screen.getByRole('button', 'Acercar', { exact: true }).tap();
+    const zoomFits = await browser.evaluate(() => {
+      const stage = document.querySelector('.pdf-stage') as HTMLElement;
+      return stage.scrollWidth > stage.clientWidth && document.documentElement.scrollWidth <= innerWidth;
+    });
+    await expect(zoomFits).toBe(true);
+    await screen.getByRole('button', 'Todas las clases', { exact: true }).tap();
+  }
 });

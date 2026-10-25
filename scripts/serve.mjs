@@ -3,14 +3,12 @@ import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve, extname, sep } from 'node:path';
 import { publicConfig, securityHeaders } from './config.mjs';
-import { preparePdfJs } from './pdfjs.mjs';
 
 // SERVE_DIR=dist sirve el sitio compilado (con versiones en las URL) tal como se publica.
 const publicDir = fileURLToPath(new URL(`../${process.env.SERVE_DIR === 'dist' ? 'dist' : 'public'}/`, import.meta.url));
 const config = publicConfig();
-if (process.env.SERVE_DIR !== 'dist') await preparePdfJs();
 const port = Number(process.env.PORT ?? 4173);
-const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8', '.pdf': 'application/pdf', '.bcmap': 'application/octet-stream', '.pfb': 'application/octet-stream', '.ttf': 'font/ttf', '.wasm': 'application/wasm' };
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8', '.pdf': 'application/pdf', '.webp': 'image/webp' };
 const server = createServer(async (req, res) => {
   const headers = { ...securityHeaders(config), 'Cache-Control': 'no-store' };
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405, headers); res.end(); return; }

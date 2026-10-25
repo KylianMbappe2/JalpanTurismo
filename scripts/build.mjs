@@ -2,11 +2,9 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { publicConfig, securityHeaders } from './config.mjs';
-import { preparePdfJs } from './pdfjs.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const config = publicConfig();
-await preparePdfJs();
 await rm(`${root}dist`, { recursive: true, force: true });
 await mkdir(`${root}dist`, { recursive: true });
 await cp(`${root}public`, `${root}dist`, { recursive: true });
