@@ -21,6 +21,7 @@ SOURCES = [
     ("3_Tema_IV_Clase_1_Contenido_para_redes.pdf", "Contenido para redes", "Tema IV · Clase 1", "Prepara publicaciones para tu negocio."),
     ("4_Tema_IV_Clase_2_Perfiles_turisticos.pdf", "Perfiles turísticos", "Tema IV · Clase 2", "Mejora la presentación de tu perfil turístico."),
     ("5_Tema_IV_Clase_3_Tu_perfil_en_vivo.pdf", "Tu perfil en vivo", "Tema IV · Clase 3", "Actualiza tu perfil paso a paso."),
+    ("6_Tema_IV_Practica_integradora_Perfiles_turisticos.pdf", "Configura tus perfiles turísticos", "Tema IV · Práctica integradora", "Tu ficha maestra, Google Maps y Airbnb en una sola práctica."),
 ]
 
 

@@ -13,7 +13,7 @@ test('SESSION-01: sesión uno intacta, tres actividades nuevas y cinco extras se
   await expect(first).toContainText('Guía para mejorar tus prompts');
   await expect(first).toContainText('Tu agente de IA');
   await expect(extras).toContainText('¿Cuándo vienen los turistas a Pinal?');
-  await expect(screen.getByText('0 de 8 actividades entregadas')).toBeVisible();
+  await expect(screen.getByText('0 de 9 actividades entregadas')).toBeVisible();
   for (const width of [320, 390, 768, 1440]) {
     await browser.setViewport({ width, height: 900 });
     expect(await browser.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

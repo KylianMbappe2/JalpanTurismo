@@ -2,13 +2,13 @@ import { test } from '@e2e-dev/web';
 import { expect } from 'e2e';
 import { courseFixture, login } from './course-fixture.ts';
 
-const titles = ['IA y chatbots', 'Tendencias y precios', 'Contenido para redes', 'Perfiles turísticos', 'Tu perfil en vivo'];
+const titles = ['IA y chatbots', 'Tendencias y precios', 'Contenido para redes', 'Perfiles turísticos', 'Tu perfil en vivo', 'Configura tus perfiles turísticos'];
 
-test('PDF-01: las cinco presentaciones se leen dentro del curso, con páginas y zoom en PC y celular', async ({ app, screen, browser }) => {
+test('PDF-01: las seis presentaciones se leen dentro del curso, con páginas y zoom en PC y celular', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
   await screen.getByRole('link', 'Materiales del curso', { exact: true }).tap();
   await expect(screen.getByRole('region', 'Clases del curso')).toBeVisible();
-  await expect(screen.getByRole('button', /^Ver clase \d:/)).toHaveCount(5);
+  await expect(screen.getByRole('button', /^Ver clase \d:/)).toHaveCount(6);
   await app.screenshot('clases-del-curso');
   await screen.getByRole('button', 'Ver clase 1: IA y chatbots', { exact: true }).tap();
   const viewer = screen.getByRole('region', 'Visor de presentaciones');
@@ -26,7 +26,7 @@ test('PDF-01: las cinco presentaciones se leen dentro del curso, con páginas y 
     await expect(screen.getByRole('status').filter({ hasText: 'Página 1 de' })).toBeVisible();
     await expect(screen.getByRole('button', 'Página anterior', { exact: true })).toBeDisabled();
   }
-  await expect(viewer.getByRole('link', 'Abrir PDF', { exact: true })).toHaveAttribute('href', '/materiales/5_Tema_IV_Clase_3_Tu_perfil_en_vivo.pdf');
+  await expect(viewer.getByRole('link', 'Abrir PDF', { exact: true })).toHaveAttribute('href', '/materiales/6_Tema_IV_Practica_integradora_Perfiles_turisticos.pdf');
   const fits = await browser.evaluate(() => {
     const slide = document.querySelector('.pdf-stage img') as HTMLImageElement;
     return slide.complete && slide.naturalWidth > 0 && document.documentElement.scrollWidth <= window.innerWidth;

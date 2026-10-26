@@ -22,7 +22,7 @@ export function validateSubmission(data) {
       if (q.required) errors[q.id] = 'Responde esta pregunta para continuar.';
       continue;
     }
-    if (q.type === 'text' && (typeof value !== 'string' || value.length > 4000 || (q.required && !value.trim()))) errors[q.id] = 'Escribe una respuesta de hasta 4,000 caracteres.';
+    if (q.type === 'text' && (typeof value !== 'string' || value.length > (q.max ?? 4000) || (q.required && !value.trim()))) errors[q.id] = q.max ? `Escribe una respuesta de hasta ${q.max} caracteres.` : 'Escribe una respuesta de hasta 4,000 caracteres.';
     if (q.type === 'radio' && !q.options.includes(value)) errors[q.id] = 'Selecciona una de las opciones.';
     if (q.type === 'multi' && (!Array.isArray(value) || value.some(v => !q.options.includes(v)) || new Set(value).size !== value.length)) errors[q.id] = 'Revisa las opciones seleccionadas.';
     if (q.type === 'check' && typeof value !== 'boolean') errors[q.id] = 'Revisa esta casilla.';

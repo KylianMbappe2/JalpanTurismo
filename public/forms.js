@@ -1,4 +1,5 @@
 import { tourismActivities } from './tourism-session.js';
+import { profilesPractice } from './profiles-practice.js';
 
 const text = (id, number, label, hint = '', required = false) => ({ id, number, label, hint, type: 'text', required });
 const choice = (id, number, label, options, type = 'radio', required = false) => ({ id, number, label, options, type, required });
@@ -228,6 +229,7 @@ export const forms = [
     ],
   },
   ...tourismActivities,
+  profilesPractice,
 ];
 
 // Complementary fields retain the PDF's open "Otro" and group-size blanks.

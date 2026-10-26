@@ -26,6 +26,6 @@ test('today has three independent activities with the full requested prompt and 
 test('extras remain available but do not become required progress', () => {
   const activities = activeForms().map(form => ({ ...form, is_published: true }));
   const work = [{ form_id: 'agente-ia', status: 'submitted' }, { form_id: 'pinal-precios', status: 'submitted' }];
-  assert.deepEqual(courseProgress(activities, work), { completed: 1, total: 8, percent: 13 });
+  assert.deepEqual(courseProgress(activities, work), { completed: 1, total: 9, percent: 11 });
   assert.equal(activities.filter(form => form.id.startsWith('pinal-')).length, 5);
 });

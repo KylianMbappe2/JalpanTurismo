@@ -295,3 +295,4 @@ body:has(.auth-layout) .site-footer{max-width:880px;padding-top:12px}
 .class-view-heading>p:last-child{font-size:14px;color:var(--muted);margin:0}
 .class-detail{scroll-margin-top:90px}
 @media(max-width:600px){.pdf-toolbar{justify-content:center;padding:12px 8px}.pdf-controls{flex-wrap:nowrap}.pdf-toolbar .button{font-size:12px}.pdf-links{padding:8px 16px}.pdf-stage{max-height:65vh;min-height:170px}.class-card{gap:12px;padding:12px}.class-cover{width:96px}.class-info{gap:4px}.class-info strong{font-size:17px}.class-description{display:none}.class-meta{font-size:11px}.class-action{font-size:0}.class-action>span{font-size:22px;margin:0}.class-view-heading h2{font-size:24px}.classes-heading h2{font-size:22px}}
+.answer-limit{display:block;margin-top:6px;color:var(--muted);font-size:12px;text-align:right}

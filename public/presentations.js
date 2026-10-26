@@ -64,5 +64,18 @@ export const presentations = [
     "height": 1080,
     "assets": "/materiales/clases/a65f19d120f441fb",
     "hasText": false
+  },
+  {
+    "id": "6",
+    "number": 6,
+    "file": "6_Tema_IV_Practica_integradora_Perfiles_turisticos.pdf",
+    "title": "Configura tus perfiles turísticos",
+    "topic": "Tema IV · Práctica integradora",
+    "description": "Tu ficha maestra, Google Maps y Airbnb en una sola práctica.",
+    "pages": 11,
+    "width": 1920,
+    "height": 1080,
+    "assets": "/materiales/clases/c6b78a45fe189e81",
+    "hasText": true
   }
 ];
