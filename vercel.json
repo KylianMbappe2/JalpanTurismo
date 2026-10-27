@@ -6,6 +6,10 @@
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
   "headers": [
     {
+      "source": "/materiales/videos/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
       "source": "/materiales/clases/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },

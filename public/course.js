@@ -10,6 +10,8 @@ import { registerHead, registerRows, registerFoot } from './delivery-register.js
 import { openFilePreview } from './file-preview.js';
 import { adminNavigation, adminSummary, adminProfile, teacherSummary } from './admin-ui.js';
 import { presentations } from './presentations.js';
+import { chatbotVideos } from './chatbot-videos.js';
+import { videoLibraryMarkup, mountVideoLibrary } from './video-library.js';
 import { classListMarkup, mountClassLibrary } from './presentation-viewer.js';
 
 export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
@@ -172,9 +174,12 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       <details class="friendly-help"><summary>¿Cómo hago una actividad?</summary><ol><li>Elige una actividad y toca Comenzar.</li><li>Responde a tu ritmo. Guarda tu avance si vas a continuar después.</li><li>Toca Entregar cuando termines. Tu docente recibirá tu trabajo.</li></ol><p>¿Ya entregaste? Toca Editar entrega para corregir tus respuestas.</p><p>Tus trabajos anteriores se conservan en Extras. Las entregas equivalentes se reconocen una sola vez en la actividad principal.</p></details>`);
   }
 
-  function materials() {
-    shell(`<div class="course-page-heading"><div><h1>Materiales del curso.</h1></div></div>${classListMarkup(presentations)}<section class="materials-guides" aria-labelledby="guides-heading"><h2 id="guides-heading">Guías y ejemplos</h2><div class="resource-list">${forms.filter(f => f.source && !f.retired).map(f => `<a class="resource-item" href="/materiales/${f.source}" target="_blank" rel="noopener"><span class="table-activity-icon">${icon(f.icon)}</span><div><h3>${e(f.title)}</h3><p>Guía de la actividad · PDF</p></div><span aria-hidden="true">↗</span></a>`).join('')}<a class="resource-item" href="/materiales/Ejemplo_lleno_Agente_IA.pdf" target="_blank" rel="noopener"><span class="table-activity-icon">${icon('bot')}</span><div><h3>Un ejemplo de agente de IA</h3><p>Cuestionario y prompt de referencia. Sus datos son inventados.</p></div><span aria-hidden="true">↗</span></a></div></section>`, 'materiales');
-    disposePreview = mountClassLibrary(main.querySelector('.class-library'), presentations);
+  function materials(focusVideos = false) {
+    shell(`<div class="course-page-heading"><div><h1>Materiales del curso.</h1></div></div>${videoLibraryMarkup(chatbotVideos)}${classListMarkup(presentations)}<section class="materials-guides" aria-labelledby="guides-heading"><h2 id="guides-heading">Guías y ejemplos</h2><div class="resource-list">${forms.filter(f => f.source && !f.retired).map(f => `<a class="resource-item" href="/materiales/${f.source}" target="_blank" rel="noopener"><span class="table-activity-icon">${icon(f.icon)}</span><div><h3>${e(f.title)}</h3><p>Guía de la actividad · PDF</p></div><span aria-hidden="true">↗</span></a>`).join('')}<a class="resource-item" href="/materiales/Ejemplo_lleno_Agente_IA.pdf" target="_blank" rel="noopener"><span class="table-activity-icon">${icon('bot')}</span><div><h3>Un ejemplo de agente de IA</h3><p>Cuestionario y prompt de referencia. Sus datos son inventados.</p></div><span aria-hidden="true">↗</span></a></div></section>`, 'materiales');
+    const closeClasses = mountClassLibrary(main.querySelector('.class-library'), presentations);
+    const closeVideos = mountVideoLibrary(main.querySelector('.video-library'), chatbotVideos);
+    disposePreview = () => { closeClasses(); closeVideos(); };
+    if (focusVideos) main.querySelector('#chatbot-videos-heading').scrollIntoView({ block: 'start' });
   }
 
   const archivedForm = id => isArchivedActivity(loaded?.activities.find(activity => activity.id === id) ?? { id });
@@ -303,7 +308,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       header();
       if (hash === '#perfil' && role() === 'instructor') return shell(adminProfile(profile(), courseForms(), icon), 'perfil');
       if (role() === 'instructor' && ['', '#', '#login', '#registro'].includes(hash)) return await showTracking();
-      if (hash === '#materiales') return materials();
+      if (hash === '#materiales' || hash === '#materiales/chatbot') return materials(hash.endsWith('/chatbot'));
       if (/^#docente(?:\/(?:retiradas|actuales))?$/.test(hash)) {
         const scope = hash === '#docente/retiradas' ? 'archived' : hash === '#docente/actuales' ? 'current' : 'all';
         if (scope !== responseScope) { activityFilter = ''; if (offset) { offset = 0; teacher = null; } }
@@ -450,7 +455,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   return {
     auth, render,
     get user() { return auth.user; }, get profile() { return profile(); }, get role() { return role(); },
-    async ready() { return load(); },
+    async ready() { disposePreview?.(); disposePreview = null; return load(); },
     activity(id) {
       const form = courseForms().find(f => f.id === id);
       if (!form) return null;

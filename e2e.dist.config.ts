@@ -8,6 +8,6 @@ export default {
     { name: 'dist-desktop', engine: web({ viewport: { width: 1440, height: 1000 } }), app },
     { name: 'dist-mobile', engine: web({ viewport: { width: 390, height: 844 } }), app },
   ],
-  tests: ['tests/dist.spec.ts', 'tests/presentations.e2e.ts', 'tests/materials-performance.e2e.ts', 'tests/profiles.e2e.ts', 'tests/curriculum.e2e.ts', 'tests/archived-activities.e2e.ts', 'tests/teacher-panel.e2e.ts', 'tests/checklist.e2e.ts', 'tests/file-preview.e2e.ts'], workers: 1, retries: 0, timeout: 60000, actionTimeout: 10000, assertionTimeout: 8000,
+  tests: ['tests/dist.spec.ts', 'tests/presentations.e2e.ts', 'tests/materials-performance.e2e.ts', 'tests/profiles.e2e.ts', 'tests/curriculum.e2e.ts', 'tests/archived-activities.e2e.ts', 'tests/teacher-panel.e2e.ts', 'tests/checklist.e2e.ts', 'tests/file-preview.e2e.ts', 'tests/chatbot-videos.e2e.ts'], workers: 1, retries: 0, timeout: 60000, actionTimeout: 10000, assertionTimeout: 8000,
   output: '.e2e/dist', reporters: ['list', 'markdown'],
 } satisfies E2EConfig;

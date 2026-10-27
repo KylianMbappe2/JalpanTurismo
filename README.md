@@ -122,3 +122,18 @@ Por indicación del docente, la evaluación diagnóstica está acreditada para t
 El icono de clip en la tabla abre la lista de archivos. «Ver archivo» muestra imágenes, PDF con navegación y zoom, texto y contenido de Word/Excel/PowerPoint modernos (DOCX/XLSX/PPTX), incluidas imágenes integradas compatibles. La vista de Office no reproduce exactamente el diseño; Excel muestra hasta 100 filas y 20 columnas por hoja. «Descargar original» conserva el archivo completo. Los archivos siguen pasando por la RPC protegida existente; no se envían a servicios externos de documentos. Los motores se sirven desde el mismo sitio y se preparan al compilar, con versiones fijadas y sus licencias. Referencias: [PDF.js](https://mozilla.github.io/pdf.js/examples/) y [fflate](https://github.com/101arrowz/fflate).
 
 Verificación: 53 pruebas unitarias y 50 casos e2e de regresión aprobados; después de ampliar la vista de Office y los controles de permisos, 8 casos e2e adicionales aprobados en PC y celular (`tests/file-preview.e2e.ts`, VISTA-01 a VISTA-04). Las pruebas comprueban navegación PDF, imágenes y Office, ausencia de cargas pesadas al entrar, vinculación de evidencias, conservación de registros y rechazo de archivos ajenos. `pnpm audit --prod`: sin vulnerabilidades conocidas.
+
+## Videos de apoyo para el chatbot
+
+La actividad 6 enlaza a Materiales → Videos para el chatbot. Los cuatro videos de clase se presentan numerados en este orden:
+
+1. Recorrido inicial y listas de chats — 0:25.
+2. Perfil y horarios del negocio — 3:36.
+3. Catálogo, ubicación y enlaces — 4:59.
+4. Mensajes automáticos y respuestas rápidas — 5:42.
+
+`public/chatbot-videos.js` mantiene el catálogo y `public/video-library.js` el reproductor. Se muestra un video a la vez, con controles nativos, reproducción dentro de la página en móvil y descarga. No se solicita ningún MP4 hasta elegir un video. Al cambiar de video o salir se detiene el anterior. Un error ofrece descarga y permite reintentar seleccionando el mismo video.
+
+Los archivos de `public/materiales/videos/chatbot/` proceden de los cuatro MP4 añadidos al escritorio el 27 de octubre de 2026. Se conserva H.264/AAC sin recodificar y se adelanta el índice del contenedor MP4 (`faststart`) para empezar la reproducción progresiva. Los nombres incluyen SHA-256 abreviado y Vercel los almacena con caché inmutable. Son materiales estáticos del curso, igual que las presentaciones; no contienen entregas de los participantes. El servidor local sirve `video/mp4` y rangos HTTP para adelantar sin cargar el archivo completo.
+
+Verificación: `tests/chatbot-videos.e2e.ts` (VIDEO-01 a VIDEO-03) comprueba los cuatro videos reales, orden, reproducción, acceso desde la actividad, conservación de una sola reproducción, carga bajo demanda, reintento, teclado, adaptación a 320/390/768/1024/1440 px y rangos 206/416. Pasaron los seis casos en PC y celular, las ocho regresiones de presentaciones/rendimiento y las 53 pruebas unitarias. La vista Materiales sigue por debajo de 200 KB antes de elegir un video.
