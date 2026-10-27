@@ -14,7 +14,10 @@ Solicitud vigente: seis actividades principales; conservar cualquier trabajo ant
 ## Conservación y publicación
 
 - Los formularios anteriores mantienen identificadores, tipos de preguntas, opciones, versiones y espacios de archivo. El diagnóstico, perfil y agente conservan su trabajo existente.
-- `guia-prompts` se conserva como extra: mejorar un prompt genérico no equivale a haber entregado el prompt conjunto de precios, competencia y temporadas.
+- Por solicitud posterior del docente, `guia-prompts` y `chatgpt` entregados acreditan la creación del prompt en la actividad principal. Se muestran también como entregas anteriores vinculadas. Las tres partes de sesión 2 o las cuatro prácticas de Pinal completas acreditan el conjunto; una parte aislada queda como avance.
 - La migración 008 modifica solo el catálogo. Los registros de usuarios, sesiones, trabajos, entregas, versiones y archivos permanecen intactos, incluidos los de WhatsApp retirado.
 - Las pruebas de interfaz usan la API simulada; las de PostgreSQL usan una base temporal. No se crean alumnos ni entregas de prueba en producción.
 - La publicación completa requiere aplicar 008 al Supabase de Aula Sierra y desplegar el frontend. Un despliegue de Vercel por sí solo no crea las actividades en la base.
+
+- El perfil turístico acepta avance parcial o simulación sin publicar, incluso para participantes sin negocio propio.
+- El seguimiento del administrador usa un recuadro por alumno y una lista de cotejo. Las equivalencias se calculan al mostrar los registros; no se crean entregas ni se reescriben folios.

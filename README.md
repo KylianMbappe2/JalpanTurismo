@@ -80,7 +80,7 @@ El curso muestra únicamente estos trabajos, en este orden:
 5. Perfil turístico (`tema4-perfiles`): basta Google Maps, TripAdvisor **o** Airbnb.
 6. Chatbot personalizado para WhatsApp (`agente-ia`): cuestionario, configuración y conversación de prueba.
 
-El avance cuenta solo estas actividades publicadas. Los demás formularios conservan sus identificadores y definiciones para consultar entregas y borradores anteriores. Aparecen en «Extras · Tus trabajos anteriores» solo si el alumno tiene trabajo guardado. El docente conserva acceso al historial y los archivos. Las secciones de Google Maps, Airbnb y TripAdvisor cambian con la plataforma elegida sin borrar respuestas ni capturas de las otras rutas.
+El avance cuenta estas actividades publicadas y las equivalencias de entregas anteriores reconocidas, sin duplicar el crédito. Los demás formularios conservan sus identificadores y definiciones para consultar entregas y borradores anteriores. Aparecen en «Extras · Tus trabajos anteriores» solo si el alumno tiene trabajo guardado. El docente conserva acceso al historial y los archivos. Las secciones de Google Maps, Airbnb y TripAdvisor cambian con la plataforma elegida sin borrar respuestas ni capturas de las otras rutas.
 
 Para actualizar el proyecto existente de Aula Sierra (`dcqrrbsckznyilrdtpkz`), ejecutar **`supabase/migrations/008_seis_actividades.sql`**. Publica las seis actividades, oculta las restantes y conserva fechas y bloqueos docentes; no modifica usuarios, sesiones, trabajos, folios, respuestas, archivos ni versiones. Es idempotente y transaccional. No ejecutar migraciones antiguas después de 008. Para instalaciones nuevas usar `supabase/setup.sql`, que incluye 008 al final.
 
@@ -101,3 +101,13 @@ El acceso y el registro usan un formulario centrado sin contenido promocional. L
 La actividad 5 conserva el prompt de la ficha maestra y todas sus preguntas y espacios de archivo anteriores. Ahora el participante elige una plataforma. Google Maps admite evidencia antes y después; TripAdvisor, ficha o solicitud en revisión; Airbnb, anuncio real o borrador. Los datos de práctica nunca se publican.
 
 Se conservan los límites en pantalla y servidor: 750 caracteres para Google Maps, 50 para el título de Airbnb y 500 para su descripción. `tests/profiles.e2e.ts` verifica también que cambiar de plataforma y recargar conserva los datos y las cinco capturas de una entrega anterior.
+
+## Lista de cotejo del administrador y trabajos anteriores
+
+Seguimiento presenta un recuadro por alumno y una lista de actividades con palomita verde en las entregadas. Cada elemento permite abrir la entrega original. El panel docente distingue Todas las entregas, Actividades del curso y Tareas retiradas; mantiene filtros, paginación, folios, respuestas, archivos y CSV. No requiere SQL adicional.
+
+`public/activity-credit.js` vincula tareas anteriores sin modificar registros: Guía para mejorar tus prompts y ChatGPT y prompts se reconocen en Prompt conjunto; también se reconoce el conjunto de tres partes de sesión 2 o de las cuatro prácticas de investigación y estrategia de Pinal, cuando todas están entregadas. Meta Business Suite se vincula como avance de calendario y WhatsApp Business como avance de chatbot; estas dos vinculaciones no acreditan automáticamente una actividad completa. Los alumnos ven estos trabajos bajo la principal y conservan su acceso en Extras. Las actividades principales ocultadas también pasan a Extras para quienes tienen trabajo.
+
+El perfil turístico admite ficha, simulación o avance parcial; no exige publicación, negocio propio, documentos de identidad ni datos de cobro. Los datos de práctica se identifican y nunca se publican.
+
+Pruebas: `tests/archived-activities.e2e.ts`, `tests/checklist.e2e.ts`, `tests/activity-credit.test.mjs` y regresiones de panel, perfiles y curso en PC y celular.

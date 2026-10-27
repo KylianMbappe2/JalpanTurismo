@@ -137,7 +137,7 @@ export async function courseFixture(browser, options = {}) {
       const activity = activities.find(f => f.id === body.p_form_id);
       activity.is_published = body.p_published; activity.due_at = body.p_due_at; activity.lock_after_due = Boolean(body.p_lock_after_due); closed(activity); return fulfill(activity);
     }
-    if (name === 'course_instructor') return fulfill({ profiles: roster.map(({ work, ...person }) => person), work: roster.flatMap(person => person.work), responses });
+    if (name === 'course_instructor') return fulfill({ profiles: roster.map(({ work, ...person }) => person), work: roster.flatMap(person => person.work), responses: responses.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + 200) });
     if (name === 'course_responses') return fulfill(responses.filter(r => body.p_ids.includes(r.id)).map(r => ({ ...r, files: files.filter(f => f.user_id === r.student_id && f.form_id === r.form_id).map(meta) })));
     if (name === 'course_reset_pin') { pinResets.push(body); return fulfill({ ok: true }); }
     if (name === 'course_tracking') {
@@ -173,7 +173,7 @@ export async function courseFixture(browser, options = {}) {
     }
     return route.fulfill({ status: 404, json: { code: 'PGRST202' } });
   });
-  return { works, responses, submitted, activities, pinResets, registered, files, versions, setSaveOffline(value) { failSave = value; } };
+  return { works, roster, responses, submitted, activities, pinResets, registered, files, versions, setSaveOffline(value) { failSave = value; } };
 }
 
 export async function login(app, screen, { open = true, pin = '1234' } = {}) {

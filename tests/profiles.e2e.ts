@@ -64,6 +64,6 @@ test('PROFILES-02: el docente consulta textos, revisión del compañero y captur
   await screen.getByRole('row').filter({ hasText: title }).getByRole('button', 'Ver entrega ↗').tap();
   await expect(screen.getByText('Cabañas de prueba en Pinal de Amoles.', { exact: true })).toBeVisible();
   await expect(screen.getByText('Gracias por la visita.', { exact: true })).toBeVisible();
-  await expect(screen.getByText('Todo es verdad: precios, horario y servicios.', { exact: true })).toBeVisible();
+  await expect(screen.getByText('Los datos reales están revisados o la simulación está identificada y no publicada.', { exact: true })).toBeVisible();
   await expect(screen.getByRole('listitem').filter({ hasText: 'borrador-airbnb.pdf' })).toBeVisible();
 });

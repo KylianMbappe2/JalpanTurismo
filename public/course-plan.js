@@ -1,6 +1,7 @@
 // Conserva los identificadores anteriores para consultar entregas y borradores.
 export const mainActivityIds = ['diagnostico', 'prompt-conjunto', 'calendario-contenido', 'flyers-ia', 'tema4-perfiles', 'agente-ia'];
 export const isMainActivity = activity => mainActivityIds.includes(activity.id);
+export const isArchivedActivity = activity => !isMainActivity(activity) || activity.is_published === false;
 export const courseOrder = (a, b) => {
   const rank = activity => isMainActivity(activity) ? mainActivityIds.indexOf(activity.id) : 100 + (activity.position ?? 0);
   return rank(a) - rank(b);
