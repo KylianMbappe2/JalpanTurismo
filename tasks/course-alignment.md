@@ -20,4 +20,4 @@ Solicitud vigente: seis actividades principales; conservar cualquier trabajo ant
 - La publicación completa requiere aplicar 008 al Supabase de Aula Sierra y desplegar el frontend. Un despliegue de Vercel por sí solo no crea las actividades en la base.
 
 - El perfil turístico acepta avance parcial o simulación sin publicar, incluso para participantes sin negocio propio.
-- El seguimiento del administrador usa un recuadro por alumno y una lista de cotejo. Las equivalencias se calculan al mostrar los registros; no se crean entregas ni se reescriben folios.
+- El seguimiento del administrador usa una tabla de cotejo con una fila por alumno, seis columnas de actividades, palomitas y totales. Las equivalencias se calculan al mostrar los registros; no se crean entregas ni se reescriben folios.

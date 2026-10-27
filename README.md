@@ -104,7 +104,7 @@ Se conservan los límites en pantalla y servidor: 750 caracteres para Google Map
 
 ## Lista de cotejo del administrador y trabajos anteriores
 
-Seguimiento presenta un recuadro por alumno y una lista de actividades con palomita verde en las entregadas. Cada elemento permite abrir la entrega original. El panel docente distingue Todas las entregas, Actividades del curso y Tareas retiradas; mantiene filtros, paginación, folios, respuestas, archivos y CSV. No requiere SQL adicional.
+Seguimiento presenta una tabla con una fila por alumno, una columna por actividad, palomitas verdes y totales por fila y columna. Cada casilla permite abrir la entrega original. En celular se desplaza la tabla y el nombre permanece visible. El panel docente distingue Todas las entregas, Actividades del curso y Tareas retiradas; mantiene filtros, paginación, folios, respuestas, archivos y CSV. No requiere SQL adicional.
 
 `public/activity-credit.js` vincula tareas anteriores sin modificar registros: Guía para mejorar tus prompts y ChatGPT y prompts se reconocen en Prompt conjunto; también se reconoce el conjunto de tres partes de sesión 2 o de las cuatro prácticas de investigación y estrategia de Pinal, cuando todas están entregadas. Meta Business Suite se vincula como avance de calendario y WhatsApp Business como avance de chatbot; estas dos vinculaciones no acreditan automáticamente una actividad completa. Los alumnos ven estos trabajos bajo la principal y conservan su acceso en Extras. Las actividades principales ocultadas también pasan a Extras para quienes tienen trabajo.
 

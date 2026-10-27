@@ -5,6 +5,7 @@ import { buildAgentPrompt } from './prompts.js';
 import { activityGroup, groupedActivities } from './activity-groups.js';
 import { isMainActivity, isArchivedActivity, courseOrder, activityTopics } from './course-plan.js';
 import { activityCredit, relatedWork, previousActivityTargets, applyPreviousCredits } from './activity-credit.js';
+import { registerHead, registerRows, registerFoot } from './delivery-register.js';
 import { adminNavigation, adminSummary, adminProfile, teacherSummary } from './admin-ui.js';
 import { presentations } from './presentations.js';
 import { classListMarkup, mountClassLibrary } from './presentation-viewer.js';
@@ -222,21 +223,15 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     });
     return { ...matrix, students, activities };
   }
-  function trackingRows() {
-    const view = filteredMatrix();
-    if (!view.students.length) return '<div class="course-empty"><h3>Nadie coincide con estos filtros</h3><p>Prueba con otro nombre, actividad o estado.</p></div>';
-    return view.students.map(student => `<article class="student-delivery-card" aria-label="Entregas de ${e(student.full_name)}"><h3>${e(student.full_name)}</h3><p class="table-subtitle">@${e(student.username)}</p><ul class="delivery-checklist">${view.activities.filter(activity => !trackStatus || (cellFor(student.user_id, activity.id)?.state ?? 'pending') === trackStatus).map(activity => {
-      const cell = cellFor(student.user_id, activity.id);
-      const state = cell?.state ?? 'pending';
-      const done = ['submitted', 'edited'].includes(state);
-      const originals = relatedWork(activity.id, teacher?.work.filter(work => work.user_id === student.user_id) ?? []);
-      return `<li class="delivery-item ${done ? 'is-delivered' : ''}"><button type="button" class="delivery-work" data-track-user="${e(student.user_id)}" data-track-form="${e(cell?.previous_form_id ?? activity.id)}" aria-label="${e(student.full_name)}, ${e(activity.title)}: ${trackText[state]}"><span class="delivery-check" aria-hidden="true">${done ? '✓' : ''}</span><span><strong>${e(activity.title)}</strong><small>${trackText[state]}${cell?.previous_form_id ? ' · Entrega anterior reconocida' : ''}</small></span><span aria-hidden="true">↗</span></button>${originals.length ? `<ul class="previous-work-list">${originals.map(work => `<li><a href="#trabajo/${e(student.user_id)}/${e(work.form_id)}">${work.status === 'submitted' ? '✓ Entregada' : 'En progreso'} · ${e(forms.find(form => form.id === work.form_id)?.title ?? work.form_id)}</a></li>`).join('')}</ul>` : ''}</li>`;
-    }).join('')}</ul></article>`).join('');
-  }
+  const trackingRows = () => registerRows(filteredMatrix(), teacher?.work ?? [], forms, trackText);
   function paintTracking() {
     const body = document.querySelector('#track-body');
     if (!body || !matrix) return;
+    const view = filteredMatrix();
     body.innerHTML = trackingRows();
+    document.querySelector('.delivery-register thead').innerHTML = registerHead(view);
+    document.querySelector('.delivery-register tfoot').innerHTML = registerFoot(view);
+    document.querySelector('.delivery-register').style.setProperty('--activity-columns', String(view.activities.length));
     const count = document.querySelector('#track-count');
     if (count) count.textContent = `${filteredMatrix().students.length} alumnos en esta vista`;
   }
@@ -247,7 +242,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       matrix = applyPreviousCredits(await data.tracking(), [...teacher.work, ...official]);
     }
     const activities = matrix.activities;
-    shell(`<div class="checklist-page"><div class="course-page-heading"><div><h1>Seguimiento del grupo.</h1><p>Hola, ${e(profile().full_name.split(' ')[0])}. Aquí puedes revisar el avance de tus alumnos.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>${adminSummary(matrix)}<a class="teacher-shortcut" href="#docente"><span>${icon('message')} Ver entregas recibidas</span>${icon('arrow')}</a><a class="teacher-shortcut" href="#docente/retiradas"><span>${icon('layers')} Ver tareas retiradas</span>${icon('arrow')}</a><section class="course-table-section"><div class="table-heading"><div><h2>Alumnos y actividades</h2><p>Toca una actividad para abrir el trabajo del alumno.</p></div><button class="button secondary" data-course-action="export-tracking">${icon('download')} Exportar seguimiento</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre o usuario</span><input id="track-search" type="search" value="${e(trackSearch)}" placeholder="Buscar nombre o usuario…"></label><details class="checklist-filters" ${trackActivity || trackStatus || trackMissing ? 'open' : ''}><summary>Filtrar lista</summary><div class="checklist-filter-fields"><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="track-activity"><option value="">Todas las actividades</option>${activities.map(activity => `<option value="${activity.id}" ${trackActivity === activity.id ? 'selected' : ''}>${e(activity.title)}</option>`).join('')}</select></label><label class="filter-field"><span class="sr-only">Filtrar por estado</span><select id="track-status"><option value="">Todos los estados</option>${Object.entries(trackText).map(([value, label]) => `<option value="${value}" ${trackStatus === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="check-line track-missing"><input type="checkbox" id="track-missing" ${trackMissing ? 'checked' : ''}><span>Solo quienes no entregaron</span></label></div></details></div><div class="activity-totals" data-testid="activity-totals">${activities.map(activity => `<div><strong>${e(activity.title)}</strong><span>entregaron ${activity.submitted} / faltan ${activity.missing}</span></div>`).join('')}</div><div id="track-body" class="student-deliveries" aria-label="Lista de cotejo de entregas">${trackingRows()}</div><p class="table-footnote" id="track-count">${filteredMatrix().students.length} alumnos en esta vista</p><p id="track-status-line" role="status" class="inline-status"></p></section></div>`, 'seguimiento');
+    shell(`<div class="checklist-page"><div class="course-page-heading"><div><h1>Seguimiento del grupo.</h1><p>Hola, ${e(profile().full_name.split(' ')[0])}. Aquí puedes revisar el avance de tus alumnos.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>${adminSummary(matrix)}<a class="teacher-shortcut" href="#docente"><span>${icon('message')} Ver entregas recibidas</span>${icon('arrow')}</a><a class="teacher-shortcut" href="#docente/retiradas"><span>${icon('layers')} Ver tareas retiradas</span>${icon('arrow')}</a><section class="course-table-section"><div class="table-heading"><div><h2>Lista de entregas</h2><p>Una fila por alumno. Toca una casilla para revisar su trabajo.</p></div><button class="button secondary" data-course-action="export-tracking">${icon('download')} Exportar seguimiento</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre o usuario</span><input id="track-search" type="search" value="${e(trackSearch)}" placeholder="Buscar nombre o usuario…"></label><details class="checklist-filters" ${trackActivity || trackStatus || trackMissing ? 'open' : ''}><summary>Filtrar lista</summary><div class="checklist-filter-fields"><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="track-activity"><option value="">Todas las actividades</option>${activities.map(activity => `<option value="${activity.id}" ${trackActivity === activity.id ? 'selected' : ''}>${e(activity.title)}</option>`).join('')}</select></label><label class="filter-field"><span class="sr-only">Filtrar por estado</span><select id="track-status"><option value="">Todos los estados</option>${Object.entries(trackText).map(([value, label]) => `<option value="${value}" ${trackStatus === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="check-line track-missing"><input type="checkbox" id="track-missing" ${trackMissing ? 'checked' : ''}><span>Solo quienes no entregaron</span></label></div></details></div><div class="activity-totals" data-testid="activity-totals">${activities.map(activity => `<div><strong>${e(activity.title)}</strong><span>entregaron ${activity.submitted} / faltan ${activity.missing}</span></div>`).join('')}</div><p class="register-legend"><span>✓ Entregada</span><span>◐ En progreso</span><span>– Pendiente</span><span>+N Trabajos anteriores</span></p><p class="register-scroll-hint">Desliza la tabla para ver todas las actividades.</p><div class="delivery-register-scroll" role="region" aria-label="Tabla de cotejo con desplazamiento" tabindex="0"><table class="delivery-register" style="--activity-columns:${visibleActivities().length}"><caption class="sr-only">Lista de cotejo de entregas</caption><thead>${registerHead(filteredMatrix())}</thead><tbody id="track-body">${trackingRows()}</tbody><tfoot>${registerFoot(filteredMatrix())}</tfoot></table></div><p class="register-note">Perfiles turísticos: se acepta avance parcial, ficha o simulación sin publicar.</p><p class="table-footnote" id="track-count">${filteredMatrix().students.length} alumnos en esta vista</p><p id="track-status-line" role="status" class="inline-status"></p></section></div>`, 'seguimiento');
   }
   // Indica a qué apartado "Sube:" pertenece cada archivo.
   const slotLabel = (formId, file) => { const q = file.slot ? getQuestions(forms.find(f => f.id === formId) ?? { sections: [] }).find(item => item.id === file.slot) : null; return q ? `${q.number ? `${q.number}. ` : ''}${q.label}` : 'Archivo adicional'; };
@@ -311,8 +306,6 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       if (event.target.id === 'track-activity') trackActivity = event.target.value;
       if (event.target.id === 'track-status') trackStatus = event.target.value;
       if (event.target.id === 'track-missing') trackMissing = event.target.checked;
-      const head = document.querySelector('.tracking-table thead');
-      if (head && matrix) head.innerHTML = `<tr><th>Alumno</th>${visibleActivities().map(activity => `<th scope="col">${e(activity.title)}<small class="table-subtitle">entregaron ${activity.submitted} / faltan ${activity.missing}</small></th>`).join('')}</tr>`;
       paintTracking(); return;
     }
     if (event.target.id === 'response-questions') { onlyQuestions = event.target.checked; paintResponses(); return; }
@@ -345,6 +338,13 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
         button.disabled = true; await beforeSignOut(); await auth.signOut(); loaded = null; teacher = null; matrix = null; offset = 0; search = ''; activityFilter = ''; onlyQuestions = false; responseScope = 'all'; loginDestination = '#seguimiento'; viewGeneration++; header(); return navigate('#login');
       }
       if (action === 'refresh') { teacher = null; matrix = null; loaded = null; await render(location.hash); return; }
+      if (button.dataset.previousUser && button.dataset.previousForm && role() === 'instructor') {
+        const previous = relatedWork(button.dataset.previousForm, teacher?.work.filter(work => work.user_id === button.dataset.previousUser) ?? []);
+        const dialog = document.querySelector('#info-dialog');
+        document.querySelector('#dialog-body').innerHTML = `<h2 id="dialog-title">Trabajos anteriores vinculados</h2><ul class="previous-work-list">${previous.map(work => `<li><a data-close-previous href="#trabajo/${e(button.dataset.previousUser)}/${e(work.form_id)}">${e(forms.find(form => form.id === work.form_id)?.title ?? work.form_id)} · ${work.status === 'submitted' ? 'Entregada' : 'En progreso'}</a></li>`).join('')}</ul>`;
+        dialog.querySelectorAll('[data-close-previous]').forEach(link => link.addEventListener('click', () => dialog.close()));
+        dialog.showModal(); return;
+      }
       if (button.dataset.trackUser && button.dataset.trackForm) return navigate(`#trabajo/${button.dataset.trackUser}/${button.dataset.trackForm}`);
       if (action === 'export-tracking') {
         if (!matrix) return;
