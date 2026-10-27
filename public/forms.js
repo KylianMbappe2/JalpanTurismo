@@ -1,5 +1,7 @@
 import { tourismActivities } from './tourism-session.js';
 import { profilesPractice } from './profiles-practice.js';
+import { courseActivities } from './course-activities.js';
+import { isMainActivity, courseOrder } from './course-plan.js';
 
 const text = (id, number, label, hint = '', required = false) => ({ id, number, label, hint, type: 'text', required });
 const choice = (id, number, label, options, type = 'radio', required = false) => ({ id, number, label, options, type, required });
@@ -110,9 +112,9 @@ export const forms = [
     ],
   },
   {
-    id: 'agente-ia', version: 1, number: '05', title: 'Tu agente de IA', short: 'Agente de IA',
+    id: 'agente-ia', version: 1, number: '06', title: 'Chatbot personalizado para WhatsApp', short: 'Chatbot WhatsApp',
     category: 'PRÁCTICA FINAL', icon: 'bot', minutes: 45, source: 'Practica_Agente_IA_WhatsApp.pdf',
-    description: 'Reúne los datos de tu negocio para preparar tu agente de IA en WhatsApp Business.',
+    description: 'Configura un chatbot con los datos de tu negocio y comprueba sus respuestas con un compañero.',
     instructions: 'Contesta con los datos reales de tu negocio. Al final, la página junta todas tus respuestas en <strong>un solo prompt</strong> listo para copiar y pegar en ChatGPT o en WhatsApp Business → Herramientas → Agente de IA. Si no sabes una respuesta, déjala en blanco y pregúntala en clase.',
     agentPrompt: true,
     sections: [
@@ -133,6 +135,12 @@ export const forms = [
         choice('a18', 18, '¿Qué datos debe pedirle al cliente?', ['Nombre', 'Adultos y niños', 'Fecha de visita', 'De dónde viene', 'Servicio que le interesa', 'Número de personas', 'Otro'], 'multi'),
         choice('a19', 19, '¿En qué casos debe pasarte la conversación?', ['Quiere reservar o pagar', 'Grupo de más de ____ personas', 'Pide hablar con una persona', 'Tiene una queja o quiere cancelar', 'Pide descuento', 'Hay una emergencia'], 'multi'),
         choice('a20', 20, '¿Cómo quieres que hable?', ['Amable y cercano', 'Con emojis (máximo 2)', 'Formal', 'Sin emojis'], 'multi'),
+      ] },
+      { title: 'Configura y prueba tu chatbot personalizado', description: 'Copia el prompt que se arma abajo y úsalo para configurar tu chatbot. Si tu cuenta no muestra la herramienta de agente, registra la limitación y prueba el prompt en una conversación de IA con tu compañero. Identifica esa prueba como simulación. Pídele que pregunte precio, ubicación y disponibilidad, y que solicite hablar con una persona. No inventes disponibilidad ni confirmes cobros.', questions: [
+        choice('a21', 21, '¿Dónde hiciste la prueba?', ['WhatsApp: chatbot configurado', 'Simulación con IA: herramienta de WhatsApp no disponible']),
+        text('a22', 22, 'Resultado de la prueba y ajustes', 'Registra qué contestó, cuándo pasó la conversación a una persona y qué corregiste.'),
+        upload('a23', 23, 'Captura de la configuración de tu chatbot'),
+        upload('a24', 24, 'Captura de la conversación de prueba', 'Oculta teléfonos y datos personales de tus clientes. Usa una conversación de prueba.'),
       ] },
     ],
   },
@@ -229,6 +237,7 @@ export const forms = [
     ],
   },
   ...tourismActivities,
+  ...courseActivities,
   profilesPractice,
 ];
 
@@ -240,7 +249,7 @@ export const extraFields = {
   a19: { id: 'a19_group', label: '¿A partir de cuántas personas debe pasarte un grupo?' },
 };
 export const getQuestions = form => form.sections.flatMap(s => s.questions);
-export const activeForms = () => forms.filter(form => !form.retired);
+export const activeForms = () => forms.filter(isMainActivity).sort(courseOrder);
 // Preguntas que guardan una respuesta (excluye los espacios para subir archivos).
 export const getAnswerQuestions = form => getQuestions(form).filter(q => q.type !== 'upload');
 export const getUploadSlots = form => getQuestions(form).filter(q => q.type === 'upload');

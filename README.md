@@ -69,30 +69,35 @@ Pila local: levanta PostgreSQL con `supabase/setup.sql` y PostgREST (rol anónim
 Prueba real en tu Supabase: ejecuta `pnpm exec e2e run --config e2e.live.config.ts` después de instalar el SQL. La suite crea una cuenta temporal `prueba.tecnica.*` con PIN aleatorio y una entrega marcada **PRUEBA TÉCNICA**; LIVE-01 verifica registro, borrador, archivos y entrega, y LIVE-02 verifica la corrección. Usa la configuración privada de `.env.local`. No utiliza ni modifica la cuenta del instructor. Si falta la migración nueva, LIVE-02 queda bloqueado hasta instalarla.
 
 Documentación oficial: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [funciones SQL](https://supabase.com/docs/guides/database/functions), [errores de PostgREST](https://postgrest.org/en/stable/references/errors.html).
-## Sesiones y actividades de hoy
+## Seis actividades principales
 
-El curso se organiza en **Sesión 1**, **Sesión 2 · Actividades de hoy** y **Extras**. La primera conserva las mismas cinco actividades, instrucciones y preguntas. La segunda añade tres trabajos: tabla de precios por temporada, comparación con tres competidores y calendario de temporadas con tabla final. Las cinco prácticas `pinal-*` anteriores quedan como extras opcionales y conservan sus identificadores, borradores, entregas y archivos. El avance del alumno cuenta únicamente las actividades publicadas de las sesiones 1 y 2.
+El curso muestra únicamente estos trabajos, en este orden:
 
-Cada actividad nueva incluye el prompt completo proporcionado para Pinal de Amoles, plegado bajo “Ver y copiar el prompt completo”, y apartados para respuestas y evidencias. La investigación, los precios y el calendario los realiza el alumno con sus datos y su gráfica; el sitio no inventa resultados ni ejecuta búsquedas por su cuenta.
+1. Evaluación diagnóstica (`diagnostico`).
+2. Crea el prompt conjunto (`prompt-conjunto`): precios, competencia y temporadas en una sola entrega.
+3. Calendario de contenido (`calendario-contenido`): 3 o 4 publicaciones de una semana.
+4. Flyers hechos con IA (`flyers-ia`): fotos reales, oferta y contacto.
+5. Perfil turístico (`tema4-perfiles`): basta Google Maps, TripAdvisor **o** Airbnb.
+6. Chatbot personalizado para WhatsApp (`agente-ia`): cuestionario, configuración y conversación de prueba.
 
-Para actualizar un Supabase que ya funciona, ejecutar **`supabase/migrations/006_sesion_dos.sql`**. Es aditivo e idempotente: agrega el catálogo nuevo y ordena las prácticas anteriores; no cambia usuarios, PIN, trabajos o archivos ni las decisiones existentes de publicación, fechas o bloqueo. `pnpm schema` genera esta migración y el instalador completo `supabase/setup.sql`. El escritorio contiene la copia `sql jalpan/04_Actividades_de_hoy_Sesion_2.sql`; después de ejecutarla, pulsar **Actualizar** en el curso. La interfaz no concede acceso a actividades que el servidor todavía no conoce.
+El avance cuenta solo estas actividades publicadas. Los demás formularios conservan sus identificadores y definiciones para consultar entregas y borradores anteriores. Aparecen en «Extras · Tus trabajos anteriores» solo si el alumno tiene trabajo guardado. El docente conserva acceso al historial y los archivos. Las secciones de Google Maps, Airbnb y TripAdvisor cambian con la plataforma elegida sin borrar respuestas ni capturas de las otras rutas.
 
-Verificación de conservación y entregas nuevas en una base temporal: `node scripts/verify-sessions.mjs` (requiere el contenedor PostgreSQL `aula-pin-qa`, configurable con `STACK_DB_CONTAINER`). Los resultados se guardan en `.e2e/session-migration.txt`.
+Para actualizar el proyecto existente de Aula Sierra (`dcqrrbsckznyilrdtpkz`), ejecutar **`supabase/migrations/008_seis_actividades.sql`**. Publica las seis actividades, oculta las restantes y conserva fechas y bloqueos docentes; no modifica usuarios, sesiones, trabajos, folios, respuestas, archivos ni versiones. Es idempotente y transaccional. No ejecutar migraciones antiguas después de 008. Para instalaciones nuevas usar `supabase/setup.sql`, que incluye 008 al final.
+
+Verificación: `pnpm test`, `pnpm build`, `pnpm exec e2e run --config e2e.dist.config.ts tests/dist.spec.ts tests/profiles.e2e.ts tests/curriculum.e2e.ts --no-cache` y `node scripts/verify-curriculum.mjs`. El último comando requiere PostgreSQL en el contenedor aislado `aula-curriculum-qa` (o `STACK_DB_CONTAINER`); comprueba conservación byte a byte de los registros, historial con versiones, catálogo, acceso del dueño, seguimiento docente y entregas sin duplicar.
+
+La correlación con las presentaciones está documentada en `tasks/course-alignment.md`.
 
 ## Interfaz para participantes sin experiencia técnica
 
-El curso usa tarjetas de actividades, letra del sistema, colores suaves y botones de al menos 44 px. En celular, el menú de actividades y materiales queda abajo; al abrir una actividad aparece su barra de guardado. Los accesos a Sesión 1, Sesión 2 y Extras desplazan y enfocan el encabezado sin cambiar el hash ni recargar el curso.
+El curso usa tarjetas de actividades, letra del sistema, colores suaves y botones de al menos 44 px. En celular, el menú de actividades y materiales queda abajo; al abrir una actividad aparece su barra de guardado. Los accesos a Actividades del curso y Extras desplazan y enfocan el encabezado sin cambiar el hash ni recargar el curso.
 
 La ayuda desplegable explica guardar, entregar y copiar un mensaje para la IA. El contenido de las actividades y las reglas de acceso, validación y guardado se conservan. Este cambio de interfaz no necesita SQL nuevo. Pruebas: `tests/friendly-ui.e2e.ts`, junto con la batería existente.
 
 El acceso y el registro usan un formulario centrado sin contenido promocional. Las instrucciones y ayudas se abren bajo demanda; los contadores aparecen al alcanzar el límite. El curso muestra el avance de forma compacta y el formulario ocupa una sola columna, con archivos opcionales y barra de guardado. No requiere migración SQL.
 
-## Tema IV · Práctica integradora de perfiles turísticos
+## Perfil turístico
 
-`tema4-perfiles` cierra el bloque «Tema IV · Perfiles turísticos», después de la sesión 2 y antes de Extras. Incluye el prompt íntegro de la ficha maestra, Google Maps con negocio real, Airbnb real o borrador de práctica, TripAdvisor opcional y las seis preguntas de revisión por compañero. Los tiempos sugeridos suman 170 minutos.
+La actividad 5 conserva el prompt de la ficha maestra y todas sus preguntas y espacios de archivo anteriores. Ahora el participante elige una plataforma. Google Maps admite evidencia antes y después; TripAdvisor, ficha o solicitud en revisión; Airbnb, anuncio real o borrador. Los datos de práctica nunca se publican.
 
-Los límites de los textos se muestran y validan en pantalla y en PostgreSQL: 750 caracteres para Google Maps, 50 para el título de Airbnb y 500 para su descripción. Los cinco espacios de evidencia son ficha maestra, Maps antes, Maps después, Airbnb y TripAdvisor opcional. La indicación de no publicar datos de práctica permanece visible en la actividad.
-
-Para habilitarla en un Supabase existente, ejecutar **solo `supabase/migrations/007_perfiles_turisticos.sql`** en el proyecto de Aula Sierra (`dcqrrbsckznyilrdtpkz`) y pulsar Actualizar en el curso. La migración añade su catálogo en la posición 9; conserva usuarios, trabajos, entregas, archivos y la configuración docente existente. La copia lista para usar está en `~/Desktop/sql jalpan/05_Practica_integradora_Perfiles_turisticos.sql`. El instalador completo `supabase/setup.sql` también incluye la actividad.
-
-Verificación: `node scripts/verify-profiles.mjs` usa PostgreSQL aislado en el contenedor `aula-perfiles-qa`; prueba conservación de datos, reejecución, cinco capturas, entrega sin duplicados y límites de texto. `tests/profiles.e2e.ts` comprueba el flujo del alumno y la consulta docente con API simulada. Estas pruebas no escriben datos de alumnos en Supabase.
+Se conservan los límites en pantalla y servidor: 750 caracteres para Google Maps, 50 para el título de Airbnb y 500 para su descripción. `tests/profiles.e2e.ts` verifica también que cambiar de plataforma y recargar conserva los datos y las cinco capturas de una entrega anterior.

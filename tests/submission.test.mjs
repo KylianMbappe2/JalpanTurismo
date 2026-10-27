@@ -12,7 +12,7 @@ const valid = () => ({
 
 test('retains all 14 diagnostic and 20 agent questions', () => {
   assert.equal(forms[0].sections.flatMap(s => s.questions).length, 14);
-  assert.equal(forms.find(f => f.id === 'agente-ia').sections.flatMap(s => s.questions).length, 20);
+  assert.deepEqual(forms.find(f => f.id === 'agente-ia').sections.flatMap(s => s.questions).slice(0, 20).map(q => q.id), Array.from({ length: 20 }, (_, i) => `a${i + 1}`));
 });
 test('allows No as a complete diagnostic answer', () => assert.deepEqual(validateSubmission(valid()), {}));
 test('rejects a missing diagnostic answer', () => {

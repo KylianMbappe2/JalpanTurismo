@@ -1,4 +1,5 @@
 import { forms } from '../public/forms.js';
+import { isMainActivity, mainActivityIds } from '../public/course-plan.js';
 
 export const TOKEN = 'a'.repeat(64);
 
@@ -25,7 +26,7 @@ export async function courseFixture(browser, options = {}) {
   const mariaId = '10000000-0000-4000-8000-000000000003';
   const role = options.instructor ? 'instructor' : 'student';
   const profile = { user_id: ownId, username: options.instructor ? 'docente' : 'ana.sierra', full_name: options.instructor ? 'Docente Sierra' : 'Ana Sierra', email: '', business: '', phone: '', municipality: '', ...options.profile };
-  const activities = forms.map((f, i) => ({ id: f.id, title: f.title, version: 1, position: i + 1, is_published: !f.retired, due_at: null, lock_after_due: false, editable: true, closed_reason: null }));
+  const activities = forms.map((f, i) => ({ id: f.id, title: f.title, version: 1, position: isMainActivity(f) ? mainActivityIds.indexOf(f.id) + 1 : 100 + i, is_published: isMainActivity(f), due_at: null, lock_after_due: false, editable: isMainActivity(f), closed_reason: isMainActivity(f) ? null : 'Trabajo anterior conservado.' }));
   if (options.closedForm) {
     const activity = activities.find(f => f.id === options.closedForm);
     activity.is_published = true;

@@ -7,16 +7,17 @@ import { validateSubmission } from '../public/submission.js';
 const activity = () => forms.find(form => form.id === 'tema4-perfiles');
 const payload = answers => ({ id: '812d6f3f-292d-4fba-9b51-50b1e4c8920e', form_id: 'tema4-perfiles', version: 1, participant: { name: 'Prueba perfiles' }, answers, questions: '', consent: true });
 
-test('the integrative practice closes the profiles block before extras, with five evidence slots', () => {
+test('profiles are the fifth main activity and retain all five historical evidence slots', () => {
   const form = activity();
   assert.ok(form, 'Práctica integradora disponible');
   const groups = groupedActivities(forms.filter(form => !form.retired));
-  const block = groups.find(group => group.id === 'tema4');
-  assert.equal(block.activities.at(-1).id, form.id);
+  const block = groups.find(group => group.id === 'course');
+  assert.equal(block.activities[4].id, form.id);
   assert.ok(groups.indexOf(block) < groups.findIndex(group => group.id === 'extras'));
   assert.equal(getUploadSlots(form).length, 5);
   const content = JSON.stringify(form);
-  for (const part of ['4.2.1', '4.2.2', '4.2.3', '4.3', 'nunca se publican', 'TripAdvisor', 'compañero', '40 min', '50 min', '20 min']) assert.ok(content.includes(part), part);
+  for (const part of ['4.2.1', '4.2.2', '4.2.3', '4.3', 'nunca se publican', 'TripAdvisor', 'compañero', 'UNA plataforma']) assert.ok(content.includes(part), part);
+  assert.deepEqual(form.sections.flatMap(s => s.questions).find(q => q.id === 'pi_plataforma').options, ['Google Maps', 'TripAdvisor', 'Airbnb']);
 });
 
 test('the complete master prompt and two review responses are preserved', () => {

@@ -3,6 +3,7 @@ import { createCourseData, base64ToBlob, formatSize, escapeHtml as e, statusLabe
 import { forms, getQuestions, getAnswerQuestions, extraFields } from './forms.js';
 import { buildAgentPrompt } from './prompts.js';
 import { activityGroup, groupedActivities } from './activity-groups.js';
+import { isMainActivity, courseOrder, activityTopics } from './course-plan.js';
 import { adminNavigation, adminSummary, adminProfile, teacherSummary } from './admin-ui.js';
 import { presentations } from './presentations.js';
 import { classListMarkup, mountClassLibrary } from './presentation-viewer.js';
@@ -31,7 +32,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     const kind = workState(work);
     return `<span class="status-badge ${kind}"><span aria-hidden="true">${kind === 'pending' ? '○' : kind === 'draft' ? '◐' : '✓'}</span> ${statusLabel(work)}</span>`;
   };
-  const courseForms = () => (loaded?.activities ?? []).map(row => ({ ...forms.find(f => f.id === row.id), ...row })).filter(f => f.sections && !f.retired);
+  const courseForms = () => (loaded?.activities ?? []).map(row => ({ ...row, ...forms.find(f => f.id === row.id) })).filter(f => f.sections && (!f.retired || role() === 'instructor' || workFor(f.id))).sort(courseOrder);
   const role = () => loaded?.context.role;
   const workFor = id => loaded?.work.find(w => w.form_id === id);
   const profile = () => loaded?.context.profile;
@@ -133,21 +134,22 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   function activityRows(activities) {
     return activities.map(activity => {
       const work = workFor(activity.id);
-      return `<tr class="activity-row${activityGroup(activity) === 'extras' ? ' is-pinal' : ''}"><td><div class="activity-table-title"><span class="table-activity-icon">${icon(activity.icon)}</span><div><strong>${e(activity.title)}</strong><small>${activity.minutes} min${activity.due_at ? ` · Hasta ${e(formatDate(activity.due_at))}` : ''}</small></div></div></td><td>${badge(work)}</td><td class="table-date">${e(formatDate(work?.saved_at))}</td><td><a class="row-action" href="#actividad/${activity.id}">${activityAction(work, activity)} ${icon('arrow')}</a></td></tr>`;
+      return `<tr class="activity-row${activityGroup(activity) === 'extras' ? ' is-pinal' : ''}"><td><div class="activity-table-title"><span class="table-activity-icon">${icon(activity.icon)}</span><div><strong>${isMainActivity(activity) ? `${e(activity.number)} · ` : ''}${e(activity.title)}</strong><small>${e(activityTopics[activity.id] ?? 'Trabajo anterior conservado')}</small><small>${activity.minutes} min${activity.due_at ? ` · Hasta ${e(formatDate(activity.due_at))}` : ''}</small></div></div></td><td>${badge(work)}</td><td class="table-date">${e(formatDate(work?.saved_at))}</td><td><a class="row-action" href="#actividad/${activity.id}">${activityAction(work, activity)} ${icon('arrow')}</a></td></tr>`;
     }).join('');
   }
 
   function activitySection(group) {
-    return `<section class="course-table-section activity-group" aria-labelledby="group-${group.id}"><div class="table-heading"><div><h3 id="group-${group.id}" tabindex="-1">${e(group.title)}</h3>${group.id === 'extras' ? '<p>Opcionales</p>' : ''}</div><span class="count-pill">${group.activities.length} actividades</span></div>${group.activities.length ? `<div class="table-scroll"><table class="course-table student-table" role="table"><caption class="sr-only">${e(group.title)}: actividades y avance personal</caption><thead><tr><th>Actividad</th><th>Estado</th><th>Último guardado</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody>${activityRows(group.activities)}</tbody></table></div>` : '<div class="course-empty"><p>El instructor publicará las actividades de esta sección aquí.</p></div>'}</section>`;
+    return `<section class="course-table-section activity-group" aria-labelledby="group-${group.id}"><div class="table-heading"><div><h3 id="group-${group.id}" tabindex="-1">${e(group.title)}</h3><p>${e(group.description)}</p></div><span class="count-pill">${group.activities.length} actividades</span></div>${group.activities.length ? `<div class="table-scroll"><table class="course-table student-table" role="table"><caption class="sr-only">${e(group.title)}: actividades y avance personal</caption><thead><tr><th>Actividad</th><th>Estado</th><th>Último guardado</th><th><span class="sr-only">Acciones</span></th></tr></thead><tbody>${activityRows(group.activities)}</tbody></table></div>` : '<div class="course-empty"><p>El instructor publicará las actividades de esta sección aquí.</p></div>'}</section>`;
   }
 
   function studentDashboard() {
-    const activities = courseForms().filter(form => form.is_published || workFor(form.id));
+    const activities = courseForms().filter(form => isMainActivity(form) ? form.is_published || workFor(form.id) : workFor(form.id));
     const progress = courseProgress(activities, loaded.work);
     const next = activities.find(form => form.is_published && activityGroup(form) !== 'extras' && workFor(form.id)?.status !== 'submitted');
     shell(`<div class="course-page-heading"><h1 id="my-activities-title">Mis actividades</h1><button class="button secondary" data-course-action="refresh">Actualizar</button></div>
       <div class="learning-summary"><div><h2>${progress.completed} de ${progress.total} actividades entregadas</h2><progress class="progress-track" max="100" value="${progress.percent}" aria-label="Avance del curso">${progress.percent}%</progress><span class="progress-caption">${progress.percent}% completado</span></div>${next ? `<a class="button primary resume-course" href="#actividad/${next.id}">Seguir con mi curso ${icon('arrow')}</a>` : ''}</div>
-      <section class="course-activities" aria-labelledby="my-activities-title"><div class="session-shortcuts" role="group" aria-label="Ir a una sesión">${groupedActivities(activities).map(group => `<button type="button" data-course-action="jump-session" data-group="${group.id}" aria-label="Ir a ${group.id === 'session2' ? 'Sesión 2' : e(group.title)}">${group.id === 'session2' ? 'Sesión 2' : e(group.title)}</button>`).join('')}</div>
+      <p>Seis trabajos: diagnóstico, prompt conjunto, calendario, flyers, perfil turístico y chatbot para WhatsApp.</p>
+      <section class="course-activities" aria-labelledby="my-activities-title"><div class="session-shortcuts" role="group" aria-label="Ir a las actividades">${groupedActivities(activities).map(group => `<button type="button" data-course-action="jump-session" data-group="${group.id}">${e(group.title)}</button>`).join('')}</div>
       ${groupedActivities(activities).map(activitySection).join('')}</section>
       <details class="friendly-help"><summary>¿Cómo hago una actividad?</summary><ol><li>Elige una actividad y toca Comenzar.</li><li>Responde a tu ritmo. Guarda tu avance si vas a continuar después.</li><li>Toca Entregar cuando termines. Tu docente recibirá tu trabajo.</li></ol><p>¿Ya entregaste? Toca Editar entrega para corregir tus respuestas.</p><p>Los extras son opcionales y no cuentan en tu avance.</p></details>`);
   }

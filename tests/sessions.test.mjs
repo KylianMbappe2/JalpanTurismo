@@ -1,13 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { forms, activeForms, getAnswerQuestions, getUploadSlots } from '../public/forms.js';
 import { courseProgress } from '../public/course-data.js';
 
-test('session one keeps the exact activities, instructions, questions and options it already had', () => {
-  const ids = ['diagnostico', 'guia-prompts', 'chatgpt', 'meta', 'agente-ia'];
-  const before = '23fcbd18fafcc98fe02fcbc404eeefa4a2c06f814bb9e3a84ca5cc4a28e6c6e8';
-  assert.equal(createHash('sha256').update(JSON.stringify(forms.filter(form => ids.includes(form.id)))).digest('hex'), before);
+test('all previous question ids, types, options and evidence slots remain compatible', () => {
+  const previous = JSON.parse(readFileSync(new URL('./fixtures/legacy-catalog.json', import.meta.url)));
+  for (const old of previous) {
+    const form = forms.find(form => form.id === old.id);
+    assert.equal(form.version, old.version);
+    for (const question of old.questions) {
+      const current = form.sections.flatMap(s => s.questions).find(q => q.id === question.id);
+      assert.ok(current, `${old.id}/${question.id}`);
+      for (const key of ['type', 'options', 'max', 'required']) assert.deepEqual(current[key], question[key], `${old.id}/${question.id}/${key}`);
+    }
+  }
 });
 
 test('today has three independent activities with the full requested prompt and places to save evidence', () => {
@@ -26,6 +33,7 @@ test('today has three independent activities with the full requested prompt and 
 test('extras remain available but do not become required progress', () => {
   const activities = activeForms().map(form => ({ ...form, is_published: true }));
   const work = [{ form_id: 'agente-ia', status: 'submitted' }, { form_id: 'pinal-precios', status: 'submitted' }];
-  assert.deepEqual(courseProgress(activities, work), { completed: 1, total: 9, percent: 11 });
-  assert.equal(activities.filter(form => form.id.startsWith('pinal-')).length, 5);
+  assert.deepEqual(courseProgress(activities, work), { completed: 1, total: 6, percent: 17 });
+  assert.deepEqual(activities.map(form => form.id), ['diagnostico', 'prompt-conjunto', 'calendario-contenido', 'flyers-ia', 'tema4-perfiles', 'agente-ia']);
+  assert.equal(forms.filter(form => form.id.startsWith('pinal-')).length, 5);
 });

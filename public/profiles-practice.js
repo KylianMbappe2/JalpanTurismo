@@ -17,19 +17,19 @@ const check = (id, label) => ({ id, label, type: 'check', required: false });
 const radio = (id, label, options) => ({ id, label, options, type: 'radio', required: false });
 
 export const profilesPractice = {
-  id: 'tema4-perfiles', version: 1, number: 'T4.1', title: 'Práctica integradora · Configura tus perfiles turísticos', short: 'Perfiles turísticos',
-  category: 'TEMA IV · PRÁCTICA INTEGRADORA', icon: 'compass', minutes: 170,
-  description: 'Prepara tu ficha maestra con IA y úsala para configurar Google Maps y Airbnb. Entrega tus capturas y la revisión de un compañero.',
-  instructions: 'Tema IV · Subtemas 4.2.1, 4.2.2, 4.2.3 y 4.3.<br><strong>Objetivo:</strong> preparar con IA todos los textos de tu negocio en una ficha maestra y usarlos para subir tu negocio a Google Maps y a Airbnb. Guarda tu avance durante la clase. Lo que no termines en clase lo terminas de tarea con tu ficha maestra.',
+  id: 'tema4-perfiles', version: 1, number: '05', title: 'Perfil turístico: Google Maps, TripAdvisor o Airbnb', short: 'Perfiles turísticos',
+  category: 'TEMA IV · PRÁCTICA INTEGRADORA', icon: 'compass', minutes: 90,
+  description: 'Prepara tu ficha maestra y configura un perfil en la plataforma que corresponda a tu negocio. Basta una plataforma.',
+  instructions: 'Tema IV · Subtemas 4.2.1, 4.2.2, 4.2.3 y 4.3. Prepara tu ficha maestra con IA y elige UNA plataforma: Google Maps, TripAdvisor o Airbnb. Solo necesitas entregar la evidencia de la que elegiste. Las capturas en revisión y los borradores también cuentan. Los datos de práctica nunca se publican.',
   sections: [
     {
       title: 'Antes de empezar',
-      description: '<strong>Quién hace qué</strong><br>Actividad 1, Google Maps: todos, con su negocio real.<br>Actividad 2, Airbnb: si tienes hospedaje, haces un anuncio real. Si no tienes hospedaje, haces un anuncio de práctica y lo dejas como borrador, sin publicar.<br><br><strong>Regla de oro: los datos de práctica nunca se publican.</strong> Las plataformas prohíben anuncios de negocios que no existen y pueden cerrar tu cuenta.<br><br><strong>Trae a la clase:</strong> celular con batería y datos; correo y contraseña de tu cuenta de Google; tus fotos editadas de la Clase 1; INE, si vas a publicar en Airbnb; horario, servicios y precios de tu negocio.<br><br><strong>Tiempos sugeridos:</strong> ficha maestra, 40 min; Google Maps, 50 min; Airbnb, 50 min; TripAdvisor, solo para conocer, 10 min; entrega y revisión, 20 min.',
-      questions: [radio('pi_modalidad', '¿Cómo harás la actividad de Airbnb?', ['Tengo hospedaje: anuncio real', 'No tengo hospedaje: borrador de práctica, sin publicar'])],
+      description: '<strong>Elige una plataforma.</strong> Trabaja con tu negocio real en Google Maps o TripAdvisor. Airbnb corresponde a hospedajes; si no tienes uno, prepara solo un borrador de práctica y no lo publiques.<br><br><strong>Regla de oro: los datos de práctica nunca se publican.</strong><br>Ten a la mano tus fotos editadas, horario, servicios y precios. No subas aquí contraseñas, INE ni datos de cobro.',
+      questions: [radio('pi_plataforma', '¿En qué plataforma harás tu perfil?', ['Google Maps', 'TripAdvisor', 'Airbnb'])],
     },
     {
       title: 'Paso previo · Tu ficha maestra',
-      description: '1. Copia el prompt en ChatGPT o Claude y cambia lo que está entre [corchetes] por tus datos. Si no tienes hospedaje, para la parte de Airbnb usa datos de práctica.<br>2. Pega el prompt y envíalo.<br>3. Revisa que todo sea verdad y que respete los límites. Si no, pídele cambios como “hazlo más corto” o “quita lo que no ofrezco”.<br>4. Guarda la respuesta en tus notas y toma captura.',
+      description: '1. Copia el prompt en ChatGPT o Claude y cambia lo que está entre [corchetes] por tus datos. Prepara los textos de la plataforma que elegiste. Si haces Airbnb sin hospedaje, usa datos de práctica solo en un borrador.<br>2. Pega el prompt y envíalo.<br>3. Revisa que todo sea verdad y que respete los límites. Si no, pídele cambios como “hazlo más corto” o “quita lo que no ofrezco”.<br>4. Guarda la respuesta en tus notas y toma captura.',
       prompt: masterProfilePrompt, promptFold: true,
       questions: [
         upload('pi_ficha', 1, 'Captura de tu ficha maestra'),
@@ -40,8 +40,8 @@ export const profilesPractice = {
       ],
     },
     {
-      title: 'Actividad 1 · Sube tu negocio a Google Maps',
-      description: '<strong>Todos trabajan con su negocio real.</strong><br>1. Google Maps → toca tu foto → Tu perfil de empresa. Si no tienes perfil: Google Maps → Agregar tu empresa.<br>2. Toca “Editar perfil”.<br>3. Pega tu descripción (máximo 750 caracteres) y revisa nombre, categoría, horario y WhatsApp.<br>4. Sube tus fotos (10 o más).<br>5. Responde tus reseñas con las respuestas de tu ficha.<br><br><strong>Evidencia:</strong> captura de tu perfil antes y después. Si queda “en revisión”, también cuenta.',
+      title: 'Google Maps · Tu perfil de empresa', platform: 'Google Maps',
+      description: '<strong>Completa esta ruta si elegiste Google Maps.</strong> Trabaja con tu negocio real.<br>1. Google Maps → toca tu foto → Tu perfil de empresa. Si no tienes perfil: Google Maps → Agregar tu empresa.<br>2. Toca “Editar perfil”.<br>3. Pega tu descripción (máximo 750 caracteres) y revisa nombre, categoría, horario y WhatsApp.<br>4. Sube tus fotos (10 o más).<br>5. Responde tus reseñas con las respuestas de tu ficha.<br><br><strong>Evidencia:</strong> captura de tu perfil antes y después. Si queda “en revisión”, también cuenta.',
       questions: [
         text('pi_google', 6, 'Tu descripción de Google Maps', 'Máximo 750 caracteres. Copia el texto de tu ficha y revisa que todo sea verdad.', 750),
         check('pi_maps_nombre', 'Nombre real y categoría correcta'),
@@ -55,9 +55,10 @@ export const profilesPractice = {
       ],
     },
     {
-      title: 'Actividad 2 · Crea tu anuncio en Airbnb',
+      title: 'Airbnb · Tu anuncio o borrador', platform: 'Airbnb',
       description: '1. En la app de Airbnb, cambia a modo anfitrión.<br>2. Toca “Crea un nuevo anuncio”.<br>3. Sigue los pasos y pega lo de tu ficha: tipo de lugar y capacidad; título (máximo 50 caracteres); descripción (máximo 500 caracteres); “El espacio”; servicios (wifi, chimenea, estacionamiento…); reglas de la casa; fotos (mínimo 5) y precio por noche.<br>4. Revisa todo y toma captura.<br><br><strong>Importante:</strong> para publicar, Airbnb pide verificar tu identidad y tus datos de cobro. Si es práctica o no tienes hospedaje, déjalo como borrador: no se publica hasta que tú le das “Publicar”.<br><strong>Los datos de práctica nunca se publican.</strong><br><br><strong>Evidencia:</strong> captura del anuncio publicado o del borrador.',
       questions: [
+        radio('pi_modalidad', '¿Cómo harás la actividad de Airbnb?', ['Tengo hospedaje: anuncio real', 'No tengo hospedaje: borrador de práctica, sin publicar']),
         text('pi_airbnb_titulo', 9, 'Tu título de Airbnb', 'Máximo 50 caracteres.', 50),
         text('pi_airbnb_descripcion', 10, 'Tu descripción de Airbnb', 'Máximo 500 caracteres.', 500),
         text('pi_airbnb_espacio', 11, 'El espacio: cómo es tu lugar'),
@@ -69,25 +70,25 @@ export const profilesPractice = {
       ],
     },
     {
-      title: 'Para conocer · TripAdvisor (no es actividad)',
-      description: '<strong>Para qué sirve:</strong> los turistas leen opiniones de otros viajeros antes de decidir. Muestra rankings de hoteles, restaurantes y “qué hacer”. Tu negocio puede aparecer aunque tú no lo hayas dado de alta.<br><br><strong>Cómo buscar:</strong><br>1. Abre la app o <a href="https://www.tripadvisor.com.mx/" target="_blank" rel="noopener">tripadvisor.com.mx</a>.<br>2. Escribe “Pinal de Amoles”.<br>3. Entra a Hoteles, Restaurantes o Qué hacer.<br>4. Busca tu negocio y el de tu competencia.<br>5. Lee qué opinan y qué fotos suben.<br><br>Si ya aparece tu negocio, más adelante puedes reclamarlo en <a href="https://www.tripadvisor.com/Owners" target="_blank" rel="noopener">tripadvisor.com/Owners</a> para responder reseñas.',
-      questions: [upload('pi_tripadvisor', 15, 'Opcional: captura de tu búsqueda en TripAdvisor')],
+      title: 'TripAdvisor · Tu perfil turístico', platform: 'TripAdvisor',
+      description: '<strong>Completa esta ruta si elegiste TripAdvisor.</strong> Busca o configura la ficha real de tu negocio; revisa categoría, ubicación, descripción, contacto y fotos. Si ya existe, solicita administrarla desde Owners. No crees una ficha duplicada. Guarda captura de la ficha o de la solicitud en revisión.<br><br><strong>Para qué sirve:</strong> los turistas leen opiniones de otros viajeros antes de decidir. Muestra rankings de hoteles, restaurantes y “qué hacer”. Tu negocio puede aparecer aunque tú no lo hayas dado de alta.<br><br><strong>Cómo buscar:</strong><br>1. Abre la app o <a href="https://www.tripadvisor.com.mx/" target="_blank" rel="noopener">tripadvisor.com.mx</a>.<br>2. Escribe “Pinal de Amoles”.<br>3. Entra a Hoteles, Restaurantes o Qué hacer.<br>4. Busca tu negocio y el de tu competencia.<br>5. Lee qué opinan y qué fotos suben.<br><br>Si ya aparece tu negocio, más adelante puedes reclamarlo en <a href="https://www.tripadvisor.com/Owners" target="_blank" rel="noopener">tripadvisor.com/Owners</a> para responder reseñas.',
+      questions: [upload('pi_tripadvisor', 15, 'TripAdvisor: captura de tu perfil o solicitud en revisión')],
     },
     {
       title: 'Revisión de un compañero',
-      description: 'Pide a un compañero que revise tu ficha y tus perfiles y marque Sí o No en cada punto.',
+      description: 'Pide a un compañero que revise tu ficha y el perfil que elegiste y marque Sí o No en cada punto.',
       questions: [
         radio('pi_revision_descripcion', 'La descripción dice qué es, dónde está y qué lo hace especial.', ['Sí', 'No']),
         radio('pi_revision_palabras', 'Usa palabras clave como Pinal de Amoles o Sierra Gorda.', ['Sí', 'No']),
         radio('pi_revision_limites', 'Respeta los límites de caracteres.', ['Sí', 'No']),
-        radio('pi_revision_fotos', 'Tiene 10 fotos reales o más.', ['Sí', 'No']),
+        radio('pi_revision_fotos', 'Tiene las fotos reales solicitadas para la plataforma elegida.', ['Sí', 'No']),
         radio('pi_revision_resenas', 'Las respuestas a reseñas son amables y sin discutir.', ['Sí', 'No']),
         radio('pi_revision_verdad', 'Todo es verdad: precios, horario y servicios.', ['Sí', 'No']),
       ],
     },
     {
       title: 'Entrega y revisión final',
-      description: 'Revisa tu entrega:<br>□ Captura de tu ficha maestra.<br>□ Google Maps: captura antes y después.<br>□ Airbnb: captura del anuncio o del borrador.<br>□ 2 respuestas a reseñas en tu ficha.<br>□ Opcional: captura de tu búsqueda en TripAdvisor.<br>□ Revisión de un compañero.<br><br><strong>Se califica:</strong> que esté completo, que use palabras clave, que respete los límites de cada plataforma y que todo sea verdad.<br><strong>Lo que no termines en clase lo terminas de tarea con tu ficha maestra.</strong>',
+      description: 'Entrega tu ficha maestra y la evidencia de <strong>UNA plataforma</strong>: Google Maps (antes y después), TripAdvisor (perfil o solicitud en revisión) o Airbnb (anuncio real o borrador). Incluye tus respuestas a reseñas y la revisión de un compañero.<br><br><strong>Se califica:</strong> contenido completo, palabras clave, límites de la plataforma elegida y datos verdaderos. Lo que no termines en clase lo terminas de tarea con tu ficha maestra.',
       questions: [text('pi_pendientes', 16, '¿Qué te falta terminar de tarea?', 'Si ya terminaste todo, puedes dejarlo en blanco.')],
     },
   ],

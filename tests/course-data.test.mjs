@@ -27,7 +27,7 @@ test('tracking CSV labels each cell and escapes formulas', () => {
   assert.ok(csv.includes("'=Ana"));
 });
 test('progress counts only published activities and submitted work', () => {
-  assert.deepEqual(courseProgress([{ id: 'a' }, { id: 'b' }, { id: 'c', is_published: false }], [{ form_id: 'a', status: 'submitted' }, { form_id: 'b', status: 'draft' }, { form_id: 'c', status: 'submitted' }]), { completed: 1, total: 2, percent: 50 });
+  assert.deepEqual(courseProgress([{ id: 'diagnostico' }, { id: 'prompt-conjunto' }, { id: 'agente-ia', is_published: false }, { id: 'meta', is_published: true }], [{ form_id: 'diagnostico', status: 'submitted' }, { form_id: 'prompt-conjunto', status: 'draft' }, { form_id: 'agente-ia', status: 'submitted' }, { form_id: 'meta', status: 'submitted' }]), { completed: 1, total: 2, percent: 50 });
   assert.equal(courseProgress([], []).percent, 0);
 });
 test('CSV protects spreadsheet formulas, quotes and line breaks', () => {

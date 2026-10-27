@@ -1,0 +1,990 @@
+[
+  {
+    "id": "diagnostico",
+    "version": 1,
+    "questions": [
+      {
+        "id": "d1",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d2",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d3",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d4",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d5",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d6",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d7",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d8",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d9",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d10",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": true
+      },
+      {
+        "id": "d11",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "d12",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "d13",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "d14",
+        "type": "text",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "guia-prompts",
+    "version": 1,
+    "questions": [
+      {
+        "id": "g1",
+        "type": "multi",
+        "options": [
+          "Quién eres y dónde está tu negocio",
+          "Qué ofreces y a qué precio",
+          "Qué mensaje necesitas y para quién",
+          "El tono",
+          "El formato o el largo"
+        ],
+        "required": false
+      },
+      {
+        "id": "g2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g6",
+        "type": "radio",
+        "options": [
+          "Amable y cercano",
+          "Formal",
+          "Divertido",
+          "Breve y directo"
+        ],
+        "required": false
+      },
+      {
+        "id": "g7",
+        "type": "radio",
+        "options": [
+          "Mensaje corto de WhatsApp (máximo 3 líneas)",
+          "Publicación para Facebook o Instagram",
+          "Lista con viñetas",
+          "Tabla"
+        ],
+        "required": false
+      },
+      {
+        "id": "g8",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g9",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "g10",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "g11",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g12",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g13",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "g14",
+        "type": "text",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "whatsapp",
+    "version": 1,
+    "questions": [
+      {
+        "id": "w1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "w2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "w3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "w4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "w5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "w6",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "w7",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "w8",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "w9",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "w10",
+        "type": "check",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "chatgpt",
+    "version": 1,
+    "questions": [
+      {
+        "id": "c1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "c2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "c3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "c4",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "c5",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "c6",
+        "type": "check",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "meta",
+    "version": 1,
+    "questions": [
+      {
+        "id": "m7",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "m1",
+        "type": "radio",
+        "options": [
+          "Facebook",
+          "Instagram",
+          "Facebook e Instagram",
+          "No aplica: mi negocio no tiene estas cuentas"
+        ],
+        "required": false
+      },
+      {
+        "id": "m8",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "m9",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "m10",
+        "type": "upload",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "agente-ia",
+    "version": 1,
+    "questions": [
+      {
+        "id": "a1",
+        "type": "radio",
+        "options": [
+          "Hospedaje (hotel, cabañas, posada)",
+          "Restaurante o cocina típica",
+          "Recorridos o tours",
+          "Guía turístico",
+          "Transporte",
+          "Otro"
+        ],
+        "required": false
+      },
+      {
+        "id": "a2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a6",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a7",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a8",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a9",
+        "type": "multi",
+        "options": [
+          "Efectivo",
+          "Tarjeta",
+          "Transferencia",
+          "Otro"
+        ],
+        "required": false
+      },
+      {
+        "id": "a10",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a11",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a12",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a13",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a14",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a15",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a16",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a17",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "a18",
+        "type": "multi",
+        "options": [
+          "Nombre",
+          "Adultos y niños",
+          "Fecha de visita",
+          "De dónde viene",
+          "Servicio que le interesa",
+          "Número de personas",
+          "Otro"
+        ],
+        "required": false
+      },
+      {
+        "id": "a19",
+        "type": "multi",
+        "options": [
+          "Quiere reservar o pagar",
+          "Grupo de más de ____ personas",
+          "Pide hablar con una persona",
+          "Tiene una queja o quiere cancelar",
+          "Pide descuento",
+          "Hay una emergencia"
+        ],
+        "required": false
+      },
+      {
+        "id": "a20",
+        "type": "multi",
+        "options": [
+          "Amable y cercano",
+          "Con emojis (máximo 2)",
+          "Formal",
+          "Sin emojis"
+        ],
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "pinal-temporadas",
+    "version": 1,
+    "questions": [
+      {
+        "id": "t1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "t2",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "t3",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "t4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "t5",
+        "type": "text",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "pinal-competencia",
+    "version": 1,
+    "questions": [
+      {
+        "id": "k1",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "k2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "k3",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "k4",
+        "type": "text",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "pinal-precios",
+    "version": 1,
+    "questions": [
+      {
+        "id": "r1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "r2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "r3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "r4",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "r5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "r6",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "r7",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "r8",
+        "type": "upload",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "pinal-estrategia",
+    "version": 1,
+    "questions": [
+      {
+        "id": "e1",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "e2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "e3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "e4",
+        "type": "text",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "pinal-cierre",
+    "version": 1,
+    "questions": [
+      {
+        "id": "z1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "z2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "z3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "z4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "z5",
+        "type": "upload",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "sesion2-precios",
+    "version": 1,
+    "questions": [
+      {
+        "id": "sp1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp6",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp7",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "sp8",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp9",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp10",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp11",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sp12",
+        "type": "upload",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "sesion2-competencia",
+    "version": 1,
+    "questions": [
+      {
+        "id": "sc1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sc2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sc3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sc4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sc5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sc6",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "sc7",
+        "type": "upload",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "sesion2-temporadas",
+    "version": 1,
+    "questions": [
+      {
+        "id": "st1",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "st2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "st3",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "st6",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "st4",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "st5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "st7",
+        "type": "upload",
+        "required": false
+      }
+    ]
+  },
+  {
+    "id": "tema4-perfiles",
+    "version": 1,
+    "questions": [
+      {
+        "id": "pi_modalidad",
+        "type": "radio",
+        "options": [
+          "Tengo hospedaje: anuncio real",
+          "No tengo hospedaje: borrador de práctica, sin publicar"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_ficha",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "pi_palabras",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_resena5",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_resena2",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_fotos",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_google",
+        "type": "text",
+        "max": 750,
+        "required": false
+      },
+      {
+        "id": "pi_maps_nombre",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_maps_horario",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_maps_contacto",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_maps_ubicacion",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_maps_fotos",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_maps_resenas",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_maps_antes",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "pi_maps_despues",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_titulo",
+        "type": "text",
+        "max": 50,
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_descripcion",
+        "type": "text",
+        "max": 500,
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_espacio",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_servicios",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_precio",
+        "type": "text",
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_fotos",
+        "type": "check",
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_estado",
+        "type": "radio",
+        "options": [
+          "Publicado: hospedaje real",
+          "Borrador: hospedaje real",
+          "Borrador de práctica: sin hospedaje, no publicado"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_airbnb_captura",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "pi_tripadvisor",
+        "type": "upload",
+        "required": false
+      },
+      {
+        "id": "pi_revision_descripcion",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_revision_palabras",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_revision_limites",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_revision_fotos",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_revision_resenas",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_revision_verdad",
+        "type": "radio",
+        "options": [
+          "Sí",
+          "No"
+        ],
+        "required": false
+      },
+      {
+        "id": "pi_pendientes",
+        "type": "text",
+        "required": false
+      }
+    ]
+  }
+]
