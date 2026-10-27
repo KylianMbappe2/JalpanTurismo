@@ -43,7 +43,7 @@ test('ARCHIVO-02: una actividad principal ocultada queda en Extras solo para qui
   fixture.works.set('flyers-ia', { form_id: 'flyers-ia', status: 'submitted', payload, step: 1, revision: 2, response_id: payload.id, saved_at: new Date().toISOString() });
   const before = JSON.stringify(fixture.works.get('flyers-ia'));
   await login(app, screen);
-  await expect(screen.getByRole('heading', '0 de 5 actividades entregadas')).toBeVisible();
+  await expect(screen.getByRole('heading', '1 de 5 actividades cumplidas')).toBeVisible();
   await expect(screen.getByRole('region', 'Actividades del curso').getByRole('row').filter({ hasText: 'Flyers hechos con IA' })).toHaveCount(0);
   await screen.getByRole('region', 'Extras · Tus trabajos anteriores').getByRole('row').filter({ hasText: 'Flyers hechos con IA' }).getByRole('link', 'Ver entrega').tap();
   await expect(screen.getByTestId('question-fi_prompt').getByRole('textbox')).toHaveValue(payload.answers.fi_prompt);
@@ -55,7 +55,7 @@ test('ARCHIVO-02: una actividad principal ocultada queda en Extras solo para qui
 
 test('ARCHIVO-03: quien no realizó una tarea retirada no recibe una actividad nueva en Extras', async ({ app, screen, browser }) => {
   await courseFixture(browser); await login(app, screen);
-  await expect(screen.getByRole('heading', '0 de 6 actividades entregadas')).toBeVisible();
+  await expect(screen.getByRole('heading', '1 de 6 actividades cumplidas')).toBeVisible();
   await expect(screen.getByRole('region', 'Extras · Tus trabajos anteriores')).toHaveCount(0);
   await expect(screen.getByRole('row').filter({ hasText: 'WhatsApp Business' })).toHaveCount(0);
 });

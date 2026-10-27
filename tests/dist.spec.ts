@@ -17,7 +17,7 @@ test('DIST-01: el sitio compilado carga las seis actividades igual en PC y celul
   await expect(block.getByRole('row').nth(5)).toContainText('Perfil turístico: Google Maps, TripAdvisor o Airbnb');
   await expect(block.getByRole('row').nth(6)).toContainText('Chatbot personalizado para WhatsApp');
   await expect(screen.getByRole('region', 'Extras · Tus trabajos anteriores')).toHaveCount(0);
-  await expect(screen.getByRole('heading', '0 de 6 actividades entregadas')).toBeVisible();
+  await expect(screen.getByRole('heading', '1 de 6 actividades cumplidas')).toBeVisible();
   await app.screenshot('seis-actividades');
   const urls = await browser.evaluate(() => performance.getEntriesByType('resource').map(entry => entry.name).filter(name => /\.(js|css)(\?|$)/.test(name) && name.startsWith(location.origin)));
   await expect(urls.length > 8).toBe(true);

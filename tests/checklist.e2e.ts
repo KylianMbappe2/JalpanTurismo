@@ -35,7 +35,7 @@ test('COTEJO-02: el alumno recibe crédito por su prompt anterior sin duplicar s
   fixture.works.set('guia-prompts', { form_id: 'guia-prompts', status: 'submitted', payload: { ...oldPrompt, participant: { name: 'Ana Sierra' } }, step: 1, revision: 2, response_id: oldPrompt.id, submitted_at: new Date().toISOString() });
   const before = JSON.stringify([...fixture.works.values()]);
   await login(app, screen);
-  await expect(screen.getByRole('heading', '1 de 6 actividades entregadas')).toBeVisible();
+  await expect(screen.getByRole('heading', '2 de 6 actividades cumplidas')).toBeVisible();
   const row = screen.getByRole('region', 'Actividades del curso').getByRole('row').filter({ hasText: 'Crea el prompt conjunto' });
   await expect(row).toContainText('Entregada');
   await row.getByRole('link', 'Ver entrega anterior', { exact: true }).tap();

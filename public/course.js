@@ -4,8 +4,10 @@ import { forms, getQuestions, getAnswerQuestions, extraFields } from './forms.js
 import { buildAgentPrompt } from './prompts.js';
 import { activityGroup, groupedActivities } from './activity-groups.js';
 import { isMainActivity, isArchivedActivity, courseOrder, activityTopics } from './course-plan.js';
-import { activityCredit, relatedWork, previousActivityTargets, applyPreviousCredits } from './activity-credit.js';
+import { activityCredit, relatedWork, previousActivityTargets, applyPreviousCredits, teacherCredits } from './activity-credit.js';
+import { evidenceWork, sourceFormId, fileActivityTargets } from './activity-evidence.js';
 import { registerHead, registerRows, registerFoot } from './delivery-register.js';
+import { openFilePreview } from './file-preview.js';
 import { adminNavigation, adminSummary, adminProfile, teacherSummary } from './admin-ui.js';
 import { presentations } from './presentations.js';
 import { classListMarkup, mountClassLibrary } from './presentation-viewer.js';
@@ -29,13 +31,18 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   let trackStatus = '';
   let trackMissing = false;
   let disposePreview = null;
-  const trackText = { pending: 'Pendiente', draft: 'En progreso', submitted: 'Entregada', edited: 'Editada tras entrega' };
+  const trackText = { pending: 'Pendiente', draft: 'En progreso', submitted: 'Entregada', edited: 'Editada tras entrega', credited: 'Acreditada por docente' };
 
   const badge = work => {
     const kind = workState(work);
     return `<span class="status-badge ${kind}"><span class="delivery-check" aria-hidden="true">${kind === 'pending' ? '○' : kind === 'draft' ? '◐' : '✓'}</span> ${statusLabel(work)}</span>`;
   };
-  const courseForms = () => (loaded?.activities ?? []).map(row => ({ ...row, ...forms.find(f => f.id === row.id) })).filter(f => f.sections && (!f.retired || role() === 'instructor' || workFor(f.id))).sort(courseOrder);
+  const creditWork = () => evidenceWork(loaded?.work ?? [], loaded?.files ?? []);
+  const courseForms = () => {
+    const rows = [...(loaded?.activities ?? [])];
+    for (const file of loaded?.files ?? []) if (!rows.some(row => row.id === file.form_id)) rows.push({ id: file.form_id, is_published: false, editable: false, closed_reason: 'Archivo anterior conservado.' });
+    return rows.map(row => ({ ...row, ...forms.find(f => f.id === row.id) })).filter(f => f.sections && (!f.retired || role() === 'instructor' || workFor(f.id) || ownFiles(f.id).length)).sort(courseOrder);
+  };
   const role = () => loaded?.context.role;
   const workFor = id => loaded?.work.find(w => w.form_id === id);
   const profile = () => loaded?.context.profile;
@@ -135,13 +142,17 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   }
 
   function activityRows(activities) {
+    const allWork = creditWork();
     return activities.map(activity => {
-      const credit = activityCredit(activity.id, loaded.work);
-      const work = credit.submitted ? credit.sources[0] : workFor(activity.id);
-      const previous = relatedWork(activity.id, loaded.work);
-      const previousLinks = previous.length ? `<ul class="previous-work-list" aria-label="Trabajos anteriores vinculados">${previous.map(item => `<li><a href="#actividad/${e(item.form_id)}">${item.status === 'submitted' ? '✓ Entregada' : 'En progreso'} · ${e(forms.find(f => f.id === item.form_id)?.title ?? item.form_id)}</a></li>`).join('')}</ul>` : '';
-      const target = credit.inherited ? credit.sources[0].form_id : activity.id;
-      return `<tr class="activity-row${activityGroup(activity) === 'extras' ? ' is-pinal' : ''}"><td><div class="activity-table-title"><span class="table-activity-icon">${icon(activity.icon)}</span><div><strong>${isMainActivity(activity) ? `${e(activity.number)} · ` : ''}${e(activity.title)}</strong><small>${e(activityTopics[activity.id] ?? 'Trabajo anterior conservado')}</small>${previousLinks}<small>${activity.minutes} min${activity.due_at ? ` · Hasta ${e(formatDate(activity.due_at))}` : ''}</small></div></div></td><td>${badge(work)}</td><td class="table-date">${e(formatDate(work?.saved_at))}</td><td><a class="row-action" href="#actividad/${target}">${credit.inherited ? 'Ver entrega anterior' : activityAction(work, activity)} ${icon('arrow')}</a></td></tr>`;
+      const credit = activityCredit(activity.id, allWork);
+      let work = workFor(activity.id);
+      if (credit.teacherCredit) work = { status: 'submitted', teacher_credit: true };
+      else if (credit.submitted) work = credit.sources[0];
+      else if (!work && (credit.partial || ownFiles(activity.id).length)) work = { status: 'draft' };
+      const previous = relatedWork(activity.id, allWork);
+      const previousLinks = previous.length ? `<ul class="previous-work-list" aria-label="Trabajos anteriores vinculados">${previous.map(item => `<li><a href="#actividad/${e(sourceFormId(item))}">${item.status === 'submitted' ? '✓ Entregada' : 'En progreso'} · ${e(forms.find(f => f.id === sourceFormId(item))?.title ?? sourceFormId(item))}${item.evidence_files?.length ? ` · ${item.evidence_files.map(file => e(file.name)).join(', ')}` : ''}</a></li>`).join('')}</ul>` : '';
+      const target = credit.inherited ? sourceFormId(credit.sources[0]) : activity.id;
+      return `<tr class="activity-row${activityGroup(activity) === 'extras' ? ' is-pinal' : ''}"><td><div class="activity-table-title"><span class="table-activity-icon">${icon(activity.icon)}</span><div><strong>${isMainActivity(activity) ? `${e(activity.number)} · ` : ''}${e(activity.title)}</strong><small>${e(activityTopics[activity.id] ?? 'Trabajo anterior conservado')}</small>${previousLinks}<small>${activity.minutes} min${activity.due_at ? ` · Hasta ${e(formatDate(activity.due_at))}` : ''}</small></div></div></td><td>${badge(work)}</td><td class="table-date">${e(formatDate(work?.saved_at))}</td><td><a class="row-action" href="#actividad/${target}">${credit.teacherCredit ? 'Consultar diagnóstico' : credit.inherited ? credit.submitted ? 'Ver entrega anterior' : 'Ver avance anterior' : activityAction(work, activity)} ${icon('arrow')}</a></td></tr>`;
     }).join('');
   }
 
@@ -150,14 +161,14 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   }
 
   function studentDashboard() {
-    const activities = courseForms().filter(form => isMainActivity(form) ? form.is_published || workFor(form.id) : workFor(form.id));
-    const progress = courseProgress(activities, loaded.work);
-    const next = activities.find(form => form.is_published && activityGroup(form) !== 'extras' && !activityCredit(form.id, loaded.work).submitted);
+    const activities = courseForms().filter(form => isMainActivity(form) ? form.is_published || workFor(form.id) || ownFiles(form.id).length : workFor(form.id) || ownFiles(form.id).length);
+    const progress = courseProgress(activities, creditWork());
+    const next = activities.find(form => form.is_published && activityGroup(form) !== 'extras' && !activityCredit(form.id, creditWork()).submitted);
     shell(`<div class="course-page-heading"><h1 id="my-activities-title">Mis actividades</h1><button class="button secondary" data-course-action="refresh">Actualizar</button></div>
-      <div class="learning-summary"><div><h2>${progress.completed} de ${progress.total} actividades entregadas</h2><progress class="progress-track" max="100" value="${progress.percent}" aria-label="Avance del curso">${progress.percent}%</progress><span class="progress-caption">${progress.percent}% completado</span></div>${next ? `<a class="button primary resume-course" href="#actividad/${next.id}">Seguir con mi curso ${icon('arrow')}</a>` : ''}</div>
+      <div class="learning-summary"><div><h2>${progress.completed} de ${progress.total} actividades cumplidas</h2><progress class="progress-track" max="100" value="${progress.percent}" aria-label="Avance del curso">${progress.percent}%</progress><span class="progress-caption">${progress.percent}% completado</span></div>${next ? `<a class="button primary resume-course" href="#actividad/${next.id}">Seguir con mi curso ${icon('arrow')}</a>` : ''}</div>
       <p>Seis trabajos: diagnóstico, prompt conjunto, calendario, flyers, perfil turístico y chatbot para WhatsApp.</p>
       <section class="course-activities" aria-labelledby="my-activities-title"><div class="session-shortcuts" role="group" aria-label="Ir a las actividades">${groupedActivities(activities).map(group => `<button type="button" data-course-action="jump-session" data-group="${group.id}">${e(group.title)}</button>`).join('')}</div>
-      ${groupedActivities(activities).map(activitySection).join('')}</section>
+      ${groupedActivities(activities).map(activitySection).join('')}</section>${loaded.files?.length ? `<section class="student-saved-files" aria-label="Mis archivos guardados"><h2>Mis archivos guardados</h2>${fileList(loaded.files)}</section>` : ''}
       <details class="friendly-help"><summary>¿Cómo hago una actividad?</summary><ol><li>Elige una actividad y toca Comenzar.</li><li>Responde a tu ritmo. Guarda tu avance si vas a continuar después.</li><li>Toca Entregar cuando termines. Tu docente recibirá tu trabajo.</li></ol><p>¿Ya entregaste? Toca Editar entrega para corregir tus respuestas.</p><p>Tus trabajos anteriores se conservan en Extras. Las entregas equivalentes se reconocen una sola vez en la actividad principal.</p></details>`);
   }
 
@@ -183,10 +194,27 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     return rows.length ? rows.map(r => `<tr><td><strong>${e(r.full_name)}</strong><small class="table-subtitle">${e(r.business || r.email || 'Participante')}</small></td><td><span class="submission-activity">${e(forms.find(f => f.id === r.form_id)?.title ?? r.form_id)}</span><span class="status-badge submitted"><span class="delivery-check" aria-hidden="true">✓</span> Entregada</span>${archivedForm(r.form_id) ? '<span class="status-badge draft">Tarea retirada</span>' : ''}${previousActivityTargets[r.form_id] ? `<small class="table-subtitle">Vinculada a: ${e(forms.find(f => f.id === previousActivityTargets[r.form_id])?.title ?? '')}</small>` : ''}</td><td class="table-date">${e(formatDate(r.submitted_at))}</td><td><span class="question-indicator">${r.questions ? 'Con preguntas' : 'Sin preguntas'}</span></td><td><button class="row-action" data-response="${e(r.id)}">Ver entrega ↗</button></td></tr>`).join('') : `<tr><td colspan="5"><div class="course-empty"><h3>${teacher?.responses.length ? 'No hay entregas con estos filtros' : 'Todavía no hay trabajos entregados'}</h3><p>${teacher?.responses.length ? 'Prueba con otro alumno o actividad, o limpia los filtros.' : 'Las entregas de tus alumnos aparecerán aquí cuando pulsen Entregar.'}</p></div></td></tr>`;
   }
 
+  const fileList = files => `<ul class="file-list">${files.map(file => `<li><span class="file-name">${e(file.name)}</span><small>${e(formatSize(file.size))}</small><button type="button" class="text-button" data-preview-file="${e(file.id)}">Ver archivo</button><button type="button" class="text-button" data-download-file="${e(file.id)}">Descargar</button></li>`).join('')}</ul>`;
+  async function loadTeacher() {
+    const result = await data.instructor(offset);
+    const records = await data.exportResponses(result.responses.map(response => response.id));
+    const files = records.flatMap(response => (response.files ?? []).map(file => ({ ...file, user_id: response.student_id })));
+    const work = [...result.work];
+    for (const response of records) if (response.student_id && !work.some(item => item.user_id === response.student_id && item.form_id === response.form_id)) work.push({ user_id: response.student_id, form_id: response.form_id, status: 'submitted', response_id: response.id });
+    const drafts = work.filter(item => item.status === 'draft');
+    for (let index = 0; index < drafts.length; index += 4) {
+      const details = await Promise.all(drafts.slice(index, index + 4).map(item => data.studentWork(item.user_id, item.form_id).catch(() => null)));
+      for (const detail of details.filter(Boolean)) files.push(...(detail.files ?? []).map(file => ({ ...file, user_id: detail.user.user_id })));
+    }
+    result.files = [...new Map(files.map(file => [file.id, file])).values()];
+    result.linkedWork = evidenceWork(work, result.files);
+    return result;
+  }
+
   async function teacherDashboard(view) {
     if (role() !== 'instructor') return studentDashboard();
     if (view === 'seguimiento') return showTracking();
-    if (!teacher) teacher = await data.instructor(offset);
+    if (!teacher) teacher = await loadTeacher();
     const title = view === 'participantes' ? 'Personas que aprenden contigo.' : view === 'gestionar' ? 'Prepara el recorrido del curso.' : 'Panel docente';
     const heading = `<div class="course-page-heading"><div><h1>${title}</h1></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>`;
     const metrics = `<div class="course-metrics"><article><span>Participantes${teacher.profiles.length === 200 ? ' en esta lista' : ''}</span><strong>${teacher.profiles.length}</strong><small>Con usuario en el curso</small></article><article><span>Entregas en esta página</span><strong>${teacher.responses.length}</strong><small>Hasta 200 por página</small></article><article><span>Con preguntas</span><strong>${teacher.responses.filter(r => r.questions?.trim()).length}</strong><small>Para retomar durante la clase</small></article></div>`;
@@ -206,7 +234,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   async function showResponse(id) {
     const response = await data.response(id);
     const form = forms.find(f => f.id === response.form_id);
-    shell(`<a class="back-link" href="${responseRoute()}">← Volver a las entregas</a><div class="course-page-heading"><div><p class="eyebrow">ENTREGA DEL PARTICIPANTE</p><h1>${e(response.full_name)}</h1><p>${e(form?.title ?? response.form_id)} · ${e(formatDate(response.submitted_at))}</p></div><button class="button secondary" data-export-response="${e(response.id)}">${icon('download')} Descargar CSV</button></div><section class="response-detail"><h2>Datos del participante</h2><dl class="person-review">${[['Correo', response.email], ['Teléfono', response.phone], ['Negocio', response.business], ['Municipio', response.municipality]].map(([key, value]) => `<div><dt>${key}</dt><dd>${e(value || 'No indicado')}</dd></div>`).join('')}</dl><h2>Respuestas</h2><dl class="answers-review">${(form ? getAnswerQuestions(form) : []).map(q => `<div><dt>${q.number ? `${q.number}. ` : ''}${e(q.label)}</dt><dd>${e(Array.isArray(response.answers[q.id]) ? response.answers[q.id].join(', ') : typeof response.answers[q.id] === 'boolean' ? response.answers[q.id] ? 'Completado' : 'Pendiente' : response.answers[q.id] || 'Sin responder')}</dd>${extraFields[q.id] && response.answers[extraFields[q.id].id] ? `<dd>${e(response.answers[extraFields[q.id].id])}</dd>` : ''}</div>`).join('')}</dl>${form?.agentPrompt ? `<h2>Prompt generado para su agente</h2><pre class="agent-prompt">${e(buildAgentPrompt(response.answers))}</pre>` : ''}<h2>Preguntas para el instructor</h2><p class="review-doubts">${e(response.questions || 'No agregó preguntas adicionales.')}</p><h2>Archivos adjuntos</h2>${response.files?.length ? `<ul class="file-list">${response.files.map(f => `<li><span class="file-name">${e(f.name)}<small class="file-slot">${e(slotLabel(response.form_id, f))}</small></span><small>${e(formatSize(f.size))}</small><button class="text-button" data-download-file="${e(f.id)}">Descargar</button></li>`).join('')}</ul>` : '<p class="review-doubts">No adjuntó archivos.</p>'}<p class="table-footnote">Folio: ${e(response.id)}</p></section>`, 'docente');
+    shell(`<a class="back-link" href="${responseRoute()}">← Volver a las entregas</a><div class="course-page-heading"><div><p class="eyebrow">ENTREGA DEL PARTICIPANTE</p><h1>${e(response.full_name)}</h1><p>${e(form?.title ?? response.form_id)} · ${e(formatDate(response.submitted_at))}</p></div><button class="button secondary" data-export-response="${e(response.id)}">${icon('download')} Descargar CSV</button></div><section class="response-detail"><h2>Datos del participante</h2><dl class="person-review">${[['Correo', response.email], ['Teléfono', response.phone], ['Negocio', response.business], ['Municipio', response.municipality]].map(([key, value]) => `<div><dt>${key}</dt><dd>${e(value || 'No indicado')}</dd></div>`).join('')}</dl><h2>Respuestas</h2><dl class="answers-review">${(form ? getAnswerQuestions(form) : []).map(q => `<div><dt>${q.number ? `${q.number}. ` : ''}${e(q.label)}</dt><dd>${e(Array.isArray(response.answers[q.id]) ? response.answers[q.id].join(', ') : typeof response.answers[q.id] === 'boolean' ? response.answers[q.id] ? 'Completado' : 'Pendiente' : response.answers[q.id] || 'Sin responder')}</dd>${extraFields[q.id] && response.answers[extraFields[q.id].id] ? `<dd>${e(response.answers[extraFields[q.id].id])}</dd>` : ''}</div>`).join('')}</dl>${form?.agentPrompt ? `<h2>Prompt generado para su agente</h2><pre class="agent-prompt">${e(buildAgentPrompt(response.answers))}</pre>` : ''}<h2>Preguntas para el instructor</h2><p class="review-doubts">${e(response.questions || 'No agregó preguntas adicionales.')}</p><h2>Archivos adjuntos</h2>${response.files?.length ? `<ul class="file-list">${response.files.map(f => `<li><span class="file-name">${e(f.name)}<small class="file-slot">${e(slotLabel(response.form_id, f))}</small></span><small>${e(formatSize(f.size))}</small><button type="button" class="text-button" data-preview-file="${e(f.id)}">Ver archivo</button><button class="text-button" data-download-file="${e(f.id)}">Descargar</button></li>`).join('')}</ul>` : '<p class="review-doubts">No adjuntó archivos.</p>'}<p class="table-footnote">Folio: ${e(response.id)}</p></section>`, 'docente');
   }
 
   const visibleActivities = () => (matrix?.activities ?? []).filter(activity => !trackActivity || activity.id === trackActivity);
@@ -218,12 +246,12 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
       if (query && !`${student.full_name} ${student.username}`.toLocaleLowerCase('es').includes(query)) return false;
       const states = activities.map(activity => cellFor(student.user_id, activity.id)?.state ?? 'pending');
       if (trackStatus && !states.includes(trackStatus)) return false;
-      if (trackMissing && states.every(state => state === 'submitted' || state === 'edited')) return false;
+      if (trackMissing && states.every(state => state === 'submitted' || state === 'edited' || state === 'credited')) return false;
       return true;
     });
     return { ...matrix, students, activities };
   }
-  const trackingRows = () => registerRows(filteredMatrix(), teacher?.work ?? [], forms, trackText);
+  const trackingRows = () => registerRows(filteredMatrix(), teacher?.linkedWork ?? [], forms, trackText);
   function paintTracking() {
     const body = document.querySelector('#track-body');
     if (!body || !matrix) return;
@@ -237,12 +265,11 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
   }
   async function showTracking() {
     if (!matrix) {
-      if (!teacher) teacher = await data.instructor(offset);
-      const official = teacher.responses.filter(response => response.student_id && !teacher.work.some(work => work.user_id === response.student_id && work.form_id === response.form_id)).map(response => ({ user_id: response.student_id, form_id: response.form_id, status: 'submitted', response_id: response.id }));
-      matrix = applyPreviousCredits(await data.tracking(), [...teacher.work, ...official]);
+      if (!teacher) teacher = await loadTeacher();
+      matrix = applyPreviousCredits(await data.tracking(), teacher.linkedWork, teacher.files);
     }
     const activities = matrix.activities;
-    shell(`<div class="checklist-page"><div class="course-page-heading"><div><h1>Seguimiento del grupo.</h1><p>Hola, ${e(profile().full_name.split(' ')[0])}. Aquí puedes revisar el avance de tus alumnos.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>${adminSummary(matrix)}<a class="teacher-shortcut" href="#docente"><span>${icon('message')} Ver entregas recibidas</span>${icon('arrow')}</a><a class="teacher-shortcut" href="#docente/retiradas"><span>${icon('layers')} Ver tareas retiradas</span>${icon('arrow')}</a><section class="course-table-section"><div class="table-heading"><div><h2>Lista de entregas</h2><p>Una fila por alumno. Toca una casilla para revisar su trabajo.</p></div><button class="button secondary" data-course-action="export-tracking">${icon('download')} Exportar seguimiento</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre o usuario</span><input id="track-search" type="search" value="${e(trackSearch)}" placeholder="Buscar nombre o usuario…"></label><details class="checklist-filters" ${trackActivity || trackStatus || trackMissing ? 'open' : ''}><summary>Filtrar lista</summary><div class="checklist-filter-fields"><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="track-activity"><option value="">Todas las actividades</option>${activities.map(activity => `<option value="${activity.id}" ${trackActivity === activity.id ? 'selected' : ''}>${e(activity.title)}</option>`).join('')}</select></label><label class="filter-field"><span class="sr-only">Filtrar por estado</span><select id="track-status"><option value="">Todos los estados</option>${Object.entries(trackText).map(([value, label]) => `<option value="${value}" ${trackStatus === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="check-line track-missing"><input type="checkbox" id="track-missing" ${trackMissing ? 'checked' : ''}><span>Solo quienes no entregaron</span></label></div></details></div><div class="activity-totals" data-testid="activity-totals">${activities.map(activity => `<div><strong>${e(activity.title)}</strong><span>entregaron ${activity.submitted} / faltan ${activity.missing}</span></div>`).join('')}</div><p class="register-legend"><span>✓ Entregada</span><span>◐ En progreso</span><span>– Pendiente</span><span>+N Trabajos anteriores</span></p><p class="register-scroll-hint">Desliza la tabla para ver todas las actividades.</p><div class="delivery-register-scroll" role="region" aria-label="Tabla de cotejo con desplazamiento" tabindex="0"><table class="delivery-register" style="--activity-columns:${visibleActivities().length}"><caption class="sr-only">Lista de cotejo de entregas</caption><thead>${registerHead(filteredMatrix())}</thead><tbody id="track-body">${trackingRows()}</tbody><tfoot>${registerFoot(filteredMatrix())}</tfoot></table></div><p class="register-note">Perfiles turísticos: se acepta avance parcial, ficha o simulación sin publicar.</p><p class="table-footnote" id="track-count">${filteredMatrix().students.length} alumnos en esta vista</p><p id="track-status-line" role="status" class="inline-status"></p></section></div>`, 'seguimiento');
+    shell(`<div class="checklist-page"><div class="course-page-heading"><div><h1>Seguimiento del grupo.</h1><p>Hola, ${e(profile().full_name.split(' ')[0])}. Aquí puedes revisar el avance de tus alumnos.</p></div><button class="button secondary" data-course-action="refresh">Actualizar</button></div>${adminSummary(matrix)}<a class="teacher-shortcut" href="#docente"><span>${icon('message')} Ver entregas recibidas</span>${icon('arrow')}</a><a class="teacher-shortcut" href="#docente/retiradas"><span>${icon('layers')} Ver tareas retiradas</span>${icon('arrow')}</a><section class="course-table-section"><div class="table-heading"><div><h2>Lista de entregas</h2><p>Una fila por alumno. Toca una casilla para revisar su trabajo.</p></div><button class="button secondary" data-course-action="export-tracking">${icon('download')} Exportar seguimiento</button></div><div class="table-toolbar"><label class="search-field"><span class="sr-only">Buscar por nombre o usuario</span><input id="track-search" type="search" value="${e(trackSearch)}" placeholder="Buscar nombre o usuario…"></label><details class="checklist-filters" ${trackActivity || trackStatus || trackMissing ? 'open' : ''}><summary>Filtrar lista</summary><div class="checklist-filter-fields"><label class="filter-field"><span class="sr-only">Filtrar por actividad</span><select id="track-activity"><option value="">Todas las actividades</option>${activities.map(activity => `<option value="${activity.id}" ${trackActivity === activity.id ? 'selected' : ''}>${e(activity.title)}</option>`).join('')}</select></label><label class="filter-field"><span class="sr-only">Filtrar por estado</span><select id="track-status"><option value="">Todos los estados</option>${Object.entries(trackText).map(([value, label]) => `<option value="${value}" ${trackStatus === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label class="check-line track-missing"><input type="checkbox" id="track-missing" ${trackMissing ? 'checked' : ''}><span>Solo quienes no entregaron</span></label></div></details></div><div class="activity-totals" data-testid="activity-totals">${activities.map(activity => `<div><strong>${e(activity.title)}</strong><span>entregaron ${activity.submitted} / faltan ${activity.missing}</span></div>`).join('')}</div><p class="register-legend"><span>✓ Entregada o acreditada</span><span>◐ En progreso</span><span>– Pendiente</span><span>+N Trabajos anteriores</span></p><p class="register-scroll-hint">Desliza la tabla para ver todas las actividades.</p><div class="delivery-register-scroll" role="region" aria-label="Tabla de cotejo con desplazamiento" tabindex="0"><table class="delivery-register" style="--activity-columns:${visibleActivities().length}"><caption class="sr-only">Lista de cotejo de entregas</caption><thead>${registerHead(filteredMatrix())}</thead><tbody id="track-body">${trackingRows()}</tbody><tfoot>${registerFoot(filteredMatrix())}</tfoot></table></div><p class="register-note">Perfiles turísticos: se acepta avance parcial, ficha o simulación sin publicar.</p><p class="table-footnote" id="track-count">${filteredMatrix().students.length} alumnos en esta vista</p><p id="track-status-line" role="status" class="inline-status"></p></section></div>`, 'seguimiento');
   }
   // Indica a qué apartado "Sube:" pertenece cada archivo.
   const slotLabel = (formId, file) => { const q = file.slot ? getQuestions(forms.find(f => f.id === formId) ?? { sections: [] }).find(item => item.id === file.slot) : null; return q ? `${q.number ? `${q.number}. ` : ''}${q.label}` : 'Archivo adicional'; };
@@ -253,10 +280,12 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     if (role() !== 'instructor') return studentDashboard();
     const detail = await data.studentWork(userId, formId);
     const form = forms.find(item => item.id === formId);
+    if (teacherCredits[formId] && detail.state !== 'submitted' && detail.state !== 'edited') detail.state = 'credited';
+    if (detail.state === 'pending' && detail.files?.length) detail.state = 'draft';
     const answers = detail.payload?.answers ?? detail.response?.answers ?? {};
     const doubts = detail.payload?.questions ?? detail.response?.questions ?? '';
     const versions = Array.isArray(detail.versions) ? detail.versions : [];
-    shell(`<a class="back-link" href="#seguimiento">← Volver al seguimiento</a><div class="course-page-heading"><div><p class="eyebrow">TRABAJO DEL ALUMNO</p><h1>${e(detail.user.full_name)}</h1><p>@${e(detail.user.username)} · ${e(form?.title ?? formId)} · <span class="status-badge ${detail.state}">${trackText[detail.state] ?? 'Pendiente'}</span></p></div></div><section class="response-detail"><p class="table-footnote">Solo lectura. ${detail.response?.id ? `Folio: <code>${e(detail.response.id)}</code>` : '<span>Todavía no hay una entrega definitiva.</span>'}${detail.saved_at ? ` · Último guardado: ${e(formatDate(detail.saved_at))}` : ''}</p><h2>Respuestas</h2>${detail.payload || detail.response ? `<dl class="answers-review">${answerList(form, answers)}</dl>` : '<p class="review-doubts">Este alumno aún no empieza la actividad.</p>'}${form?.agentPrompt && (detail.payload || detail.response) ? `<h2>Prompt generado para su agente</h2><pre class="agent-prompt">${e(buildAgentPrompt(answers))}</pre>` : ''}<h2>Preguntas para el instructor</h2><p class="review-doubts">${e(doubts || 'No agregó preguntas adicionales.')}</p><h2>Archivos adjuntos</h2>${detail.files?.length ? `<ul class="file-list">${detail.files.map(file => `<li><span class="file-name">${e(file.name)}<small class="file-slot">${e(slotLabel(formId, file))}</small></span><small>${e(formatSize(file.size))}</small><button type="button" class="text-button" data-download-file="${e(file.id)}">Descargar</button></li>`).join('')}</ul>` : '<p class="review-doubts">No hay archivos.</p>'}<h2>Versiones anteriores</h2>${versions.length ? `<ol class="version-list">${versions.map(version => `<li><strong>${e(formatDate(version.saved_at))}</strong><span>${e(version.participant?.name || '')}</span><p class="review-doubts">${e(version.questions || 'Sin preguntas en esa versión.')}</p><dl class="answers-review">${answerList(form, version.answers)}</dl></li>`).join('')}</ol>` : '<p class="review-doubts">No hay versiones anteriores.</p>'}</section>`, 'seguimiento');
+    shell(`<a class="back-link" href="#seguimiento">← Volver al seguimiento</a><div class="course-page-heading"><div><p class="eyebrow">TRABAJO DEL ALUMNO</p><h1>${e(detail.user.full_name)}</h1><p>@${e(detail.user.username)} · ${e(form?.title ?? formId)} · <span class="status-badge ${detail.state}">${trackText[detail.state] ?? 'Pendiente'}</span></p></div></div><section class="response-detail">${teacherCredits[formId] ? `<p class="notice">${e(teacherCredits[formId])} Las respuestas previas se conservan.</p>` : ''}<p class="table-footnote">Solo lectura. ${detail.response?.id ? `Folio: <code>${e(detail.response.id)}</code>` : '<span>Todavía no hay una entrega definitiva.</span>'}${detail.saved_at ? ` · Último guardado: ${e(formatDate(detail.saved_at))}` : ''}</p><h2>Respuestas</h2>${detail.payload || detail.response ? `<dl class="answers-review">${answerList(form, answers)}</dl>` : `<p class="review-doubts">${detail.state === 'credited' ? 'No se requieren respuestas nuevas; la evaluación está acreditada.' : 'Este alumno aún no empieza la actividad.'}</p>`}${form?.agentPrompt && (detail.payload || detail.response) ? `<h2>Prompt generado para su agente</h2><pre class="agent-prompt">${e(buildAgentPrompt(answers))}</pre>` : ''}<h2>Preguntas para el instructor</h2><p class="review-doubts">${e(doubts || 'No agregó preguntas adicionales.')}</p><h2>Archivos adjuntos</h2>${detail.files?.length ? `<ul class="file-list">${detail.files.map(file => `<li><span class="file-name">${e(file.name)}<small class="file-slot">${e(slotLabel(formId, file))}</small></span><small>${e(formatSize(file.size))}</small><button type="button" class="text-button" data-preview-file="${e(file.id)}">Ver archivo</button><button type="button" class="text-button" data-download-file="${e(file.id)}">Descargar</button></li>`).join('')}</ul>` : '<p class="review-doubts">No hay archivos.</p>'}<h2>Versiones anteriores</h2>${versions.length ? `<ol class="version-list">${versions.map(version => `<li><strong>${e(formatDate(version.saved_at))}</strong><span>${e(version.participant?.name || '')}</span><p class="review-doubts">${e(version.questions || 'Sin preguntas en esa versión.')}</p><dl class="answers-review">${answerList(form, version.answers)}</dl></li>`).join('')}</ol>` : '<p class="review-doubts">No hay versiones anteriores.</p>'}</section>`, 'seguimiento');
   }
 
   async function render(hash) {
@@ -338,10 +367,20 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
         button.disabled = true; await beforeSignOut(); await auth.signOut(); loaded = null; teacher = null; matrix = null; offset = 0; search = ''; activityFilter = ''; onlyQuestions = false; responseScope = 'all'; loginDestination = '#seguimiento'; viewGeneration++; header(); return navigate('#login');
       }
       if (action === 'refresh') { teacher = null; matrix = null; loaded = null; await render(location.hash); return; }
+      if (button.dataset.workFilesUser && role() === 'instructor') {
+        const userId = button.dataset.workFilesUser; const formId = button.dataset.workFilesForm;
+        const sourceIds = [formId, ...relatedWork(formId, teacher.linkedWork.filter(work => work.user_id === userId)).map(sourceFormId)];
+        let files = teacher.files.filter(file => file.user_id === userId && (sourceIds.includes(file.form_id) || fileActivityTargets(file).includes(formId)));
+        if (!files.length) {
+          const detail = await data.studentWork(userId, formId); files = detail.files ?? [];
+        }
+        document.querySelector('#dialog-body').innerHTML = `<h2 id="dialog-title">Archivos de la actividad</h2>${files.length ? fileList(files) : '<p>No hay archivos disponibles en esta actividad.</p>'}`;
+        document.querySelector('#info-dialog').showModal(); return;
+      }
       if (button.dataset.previousUser && button.dataset.previousForm && role() === 'instructor') {
-        const previous = relatedWork(button.dataset.previousForm, teacher?.work.filter(work => work.user_id === button.dataset.previousUser) ?? []);
+        const previous = relatedWork(button.dataset.previousForm, teacher?.linkedWork.filter(work => work.user_id === button.dataset.previousUser) ?? []);
         const dialog = document.querySelector('#info-dialog');
-        document.querySelector('#dialog-body').innerHTML = `<h2 id="dialog-title">Trabajos anteriores vinculados</h2><ul class="previous-work-list">${previous.map(work => `<li><a data-close-previous href="#trabajo/${e(button.dataset.previousUser)}/${e(work.form_id)}">${e(forms.find(form => form.id === work.form_id)?.title ?? work.form_id)} · ${work.status === 'submitted' ? 'Entregada' : 'En progreso'}</a></li>`).join('')}</ul>`;
+        document.querySelector('#dialog-body').innerHTML = `<h2 id="dialog-title">Trabajos anteriores vinculados</h2><ul class="previous-work-list">${previous.map(work => `<li><a data-close-previous href="#trabajo/${e(button.dataset.previousUser)}/${e(sourceFormId(work))}">${e(forms.find(form => form.id === sourceFormId(work))?.title ?? sourceFormId(work))} · ${work.status === 'submitted' ? 'Entregada' : 'En progreso'}</a></li>`).join('')}</ul>`;
         dialog.querySelectorAll('[data-close-previous]').forEach(link => link.addEventListener('click', () => dialog.close()));
         dialog.showModal(); return;
       }
@@ -361,6 +400,7 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
         downloadText(responsesCsv(records), `aula-sierra-entregas-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8');
         const status = document.querySelector('#export-status'); if (status) status.textContent = `Exportadas ${records.length} entregas de esta lista.`;
       }
+      if (button.dataset.previewFile) return await openFilePreview(() => data.downloadFile(button.dataset.previewFile));
       if (button.dataset.downloadFile) { button.disabled = true; return await downloadFile(button.dataset.downloadFile); }
       if (button.dataset.resetPin) return resetPinDialog(button.dataset.resetPin, button.dataset.resetName);
       if (button.dataset.saveActivity) {
@@ -414,12 +454,13 @@ export function createCourse({ config, main, icon, navigate, beforeSignOut }) {
     activity(id) {
       const form = courseForms().find(f => f.id === id);
       if (!form) return null;
-      if (role() === 'instructor' || form.is_published || workFor(id)) return form;
+      if (role() === 'instructor' || form.is_published || workFor(id) || ownFiles(id).length) return { ...form, teacherCreditReason: teacherCredits[id] };
       return null;
     },
     work(id) { const work = workFor(id); return work ? structuredClone(work) : null; },
     files(id) { return structuredClone(ownFiles(id)); },
     async uploadFile(formId, name, type, base64, slot = null) { const file = await data.uploadFile(formId, name, type, base64, slot); loaded.files = [...(loaded.files ?? []), file]; teacher = null; return file; },
+    async previewFile(id) { return openFilePreview(() => data.downloadFile(id)); },
     async deleteFile(id) { await data.deleteFile(id); loaded.files = (loaded.files ?? []).filter(f => f.id !== id); },
     async save(payload, step, revision) { const work = await data.save(payload, step, revision); updateWork(work); return work; },
     async complete(payload, revision) { const receipt = await data.complete(payload, revision); updateWork(receipt.work); return receipt; },

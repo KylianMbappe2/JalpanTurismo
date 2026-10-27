@@ -25,7 +25,7 @@ for (const [title, id, answer, slot] of [
     await expect(fixture.responses[0].id).toBe(folio);
     await expect(fixture.files).toHaveLength(1);
     await screen.getByRole('link', 'Volver a mi curso', { exact: true }).tap();
-    await expect(screen.getByRole('heading', '1 de 6 actividades entregadas')).toBeVisible();
+    await expect(screen.getByRole('heading', '2 de 6 actividades cumplidas')).toBeVisible();
   });
 }
 
@@ -39,7 +39,7 @@ test('CURSO-02: conserva entregas retiradas y borradores extra con su folio y ar
   fixture.files.push({ id: '30000000-0000-4000-8000-000000000071', user_id: '10000000-0000-4000-8000-000000000001', form_id: 'whatsapp', name: 'evidencia-anterior.pdf', mime: 'application/pdf', size: 9, created_at: now, data: btoa('pdf-bytes') });
   const before = JSON.stringify([...fixture.works.values()]);
   await login(app, screen);
-  await expect(screen.getByRole('heading', '0 de 6 actividades entregadas')).toBeVisible();
+  await expect(screen.getByRole('heading', '1 de 6 actividades cumplidas')).toBeVisible();
   const extras = screen.getByRole('region', 'Extras · Tus trabajos anteriores');
   await expect(extras.getByRole('row')).toHaveCount(3);
   await expect(extras).toContainText('WhatsApp Business');

@@ -5,10 +5,11 @@ import { activityCredit } from './activity-credit.js';
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export function workState(work) {
   if (!work) return 'pending';
+  if (work.teacher_credit) return 'credited';
   if (work.status === 'submitted' && work.resubmitted_at) return 'edited';
   return work.status === 'submitted' ? 'submitted' : 'draft';
 }
-export const statusLabel = work => ({ pending: 'Pendiente', draft: 'En progreso', submitted: 'Entregada', edited: 'Editada tras entrega' })[workState(work)];
+export const statusLabel = work => ({ pending: 'Pendiente', draft: 'En progreso', submitted: 'Entregada', edited: 'Editada tras entrega', credited: 'Acreditada por docente' })[workState(work)];
 export function activityOpen(activity) {
   if (!activity || activity.is_published === false || activity.editable === false) return false;
   if (activity.lock_after_due && activity.due_at && Number.isFinite(new Date(activity.due_at).getTime()) && new Date(activity.due_at).getTime() <= Date.now()) return false;
@@ -25,7 +26,7 @@ export function activityAction(work, activity) {
   if (work?.status === 'submitted') return 'Editar entrega';
   return work ? 'Continuar' : 'Comenzar';
 }
-const trackLabels = { pending: 'Pendiente', draft: 'En progreso', submitted: 'Entregada', edited: 'Editada tras entrega' };
+const trackLabels = { pending: 'Pendiente', draft: 'En progreso', submitted: 'Entregada', edited: 'Editada tras entrega', credited: 'Acreditada por docente' };
 export function trackingCsv(matrix) {
   const activities = matrix?.activities ?? [];
   const cells = matrix?.cells ?? [];

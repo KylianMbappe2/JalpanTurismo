@@ -22,7 +22,7 @@ El rol de instructor solo se asigna desde SQL; nadie puede elegirlo al registrar
 ## Uso durante el curso
 
 - **Alumno:** Crear cuenta (nombre, usuario, PIN dos veces) → entra directo → Comenzar, Continuar o Editar entrega. El formulario es una sola página: datos plegables, preguntas, dudas y archivos, con Guardar avance y Entregar. Si ya entregó, el botón pasa a ser Guardar cambios de la entrega y el aviso muestra el folio. Recargar la pestaña conserva la sesión; al cerrarla o pulsar Salir se vuelve a entrar con usuario y PIN.
-- **Archivos:** hasta 5 archivos de 5 MB por actividad (fotos JPG/PNG/WebP, PDF, Word, Excel, PowerPoint o texto). Las fotos de más de 1 MB se reducen a 1600 px en el propio celular. Se pueden subir y quitar también después de entregar, mientras la actividad siga abierta. El instructor los descarga desde el detalle. Se guardan en `aula_files`: vigila el espacio del plan de Supabase (500 MB en el gratuito).
+- **Archivos:** hasta 5 archivos de 5 MB por actividad (fotos JPG/PNG/WebP, PDF, Word, Excel, PowerPoint o texto). Las fotos de más de 1 MB se reducen a 1600 px en el propio celular. Se pueden subir y quitar también después de entregar, mientras la actividad siga abierta. El instructor y el propietario pueden verlos dentro de la página o descargar el original. Se guardan en `aula_files`: vigila el espacio del plan de Supabase (500 MB en el gratuito).
 - **PIN olvidado:** el instructor abre Participantes → Restablecer PIN y comparte el nuevo. Se cierran las sesiones abiertas de esa persona; sus actividades se conservan. Cinco PIN incorrectos seguidos bloquean la cuenta 15 minutos.
 - **Instructor:** Seguimiento es la matriz de alumnos por actividad, con estados Pendiente, En progreso, Entregada y Editada tras entrega, contadores de quién entregó y filtros. Una celda abre el trabajo en solo lectura, con respuestas, dudas, archivos e historial de versiones. Entregas y preguntas conserva búsqueda, detalle y CSV. Actividades permite publicar u ocultar y, si se marca, bloquear la edición al pasar la fecha límite. Sin esa marca, la fecha es solo una referencia. Ocultar la actividad cierra guardados, correcciones y archivos.
 - **Materiales:** seis clases con portada, título y número de diapositivas. La última es «Configura tus perfiles turísticos», a partir del archivo original `Airbnv.pdf` (11 diapositivas). Al elegir una clase se abre su visor integrado, con páginas, zoom, regreso a la lista y descarga del PDF original. La lista solo carga portadas WebP; el visor carga la diapositiva elegida y prepara la siguiente. No descarga los PDF para mostrar las clases. Las guías y el ejemplo del agente de IA siguen disponibles debajo.
@@ -52,7 +52,7 @@ pnpm test:e2e
 pnpm build
 ```
 
-`pnpm dev` imprime la URL local, normalmente `http://127.0.0.1:4173`. `pnpm build` genera `dist/` con configuración pública; vuelve a compilar al cambiar `.env.local`. No hay dependencias de producción ni analíticas.
+`pnpm dev` imprime la URL local, normalmente `http://127.0.0.1:4173`. `pnpm build` genera `dist/` con configuración pública; vuelve a compilar al cambiar `.env.local`. El visor usa PDF.js y fflate, cargados solo al abrir archivos; no hay analíticas.
 
 Las vistas de las presentaciones se generan con `python3 scripts/render-presentations.py` (Poppler y Pillow) al cambiar un PDF. El script prepara versiones WebP de 960 y 1920 px, portadas de 480 px y `public/presentations.js`. Estos archivos se guardan en Git; Vercel no necesita Python ni Poppler. Las carpetas incluyen una huella del PDF y de los ajustes de conversión para poder almacenarlas en caché sin servir imágenes antiguas.
 
@@ -111,3 +111,14 @@ Seguimiento presenta una tabla con una fila por alumno, una columna por activida
 El perfil turístico admite ficha, simulación o avance parcial; no exige publicación, negocio propio, documentos de identidad ni datos de cobro. Los datos de práctica se identifican y nunca se publican.
 
 Pruebas: `tests/archived-activities.e2e.ts`, `tests/checklist.e2e.ts`, `tests/activity-credit.test.mjs` y regresiones de panel, perfiles y curso en PC y celular.
+
+
+## Evidencias y acreditación del diagnóstico
+
+Por indicación del docente, la evaluación diagnóstica está acreditada para todo el grupo. Se muestra «Acreditada por docente» en seguimiento, perfil del alumno y CSV; cuenta en el avance del curso. Las entregas reales conservan su estado y sus respuestas. Esta política del curso está en `teacherCredits` de `public/activity-credit.js`; no genera respuestas, folios ni entregas ficticias y no requiere SQL adicional.
+
+`public/activity-evidence.js` complementa las equivalencias por actividad con nombres explícitos de archivos: flyer/cartel, calendario de contenido, perfil de Google Maps/TripAdvisor/Airbnb, chatbot, prompt conjunto y ficha maestra. Una evidencia de un trabajo entregado reconoce la actividad correspondiente; un archivo o borrador guardado muestra avance. Se conserva siempre el propietario, actividad original y folio. Los nombres ambiguos no se asignan automáticamente. Todos los archivos propios aparecen también en «Mis archivos guardados», incluidos los de tareas retiradas.
+
+El icono de clip en la tabla abre la lista de archivos. «Ver archivo» muestra imágenes, PDF con navegación y zoom, texto y contenido de Word/Excel/PowerPoint modernos (DOCX/XLSX/PPTX), incluidas imágenes integradas compatibles. La vista de Office no reproduce exactamente el diseño; Excel muestra hasta 100 filas y 20 columnas por hoja. «Descargar original» conserva el archivo completo. Los archivos siguen pasando por la RPC protegida existente; no se envían a servicios externos de documentos. Los motores se sirven desde el mismo sitio y se preparan al compilar, con versiones fijadas y sus licencias. Referencias: [PDF.js](https://mozilla.github.io/pdf.js/examples/) y [fflate](https://github.com/101arrowz/fflate).
+
+Verificación: 53 pruebas unitarias y 50 casos e2e de regresión aprobados; después de ampliar la vista de Office y los controles de permisos, 8 casos e2e adicionales aprobados en PC y celular (`tests/file-preview.e2e.ts`, VISTA-01 a VISTA-04). Las pruebas comprueban navegación PDF, imágenes y Office, ausencia de cargas pesadas al entrar, vinculación de evidencias, conservación de registros y rechazo de archivos ajenos. `pnpm audit --prod`: sin vulnerabilidades conocidas.

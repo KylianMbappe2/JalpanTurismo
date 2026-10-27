@@ -14,7 +14,7 @@ export function adminNavigation(active, icon) {
 export function adminSummary(matrix) {
   const submissions = matrix.activities.reduce((sum, activity) => sum + activity.submitted, 0);
   const missing = matrix.activities.reduce((sum, activity) => sum + activity.missing, 0);
-  return `<div class="admin-summary" data-testid="admin-summary"><article><p><strong>${matrix.students.length}</strong> alumnos</p><span>En tu grupo</span></article><article><p><strong>${submissions}</strong> entregas</p><span>Recibidas</span></article><article><p><strong>${missing}</strong> pendientes</p><span>Por entregar</span></article></div>`;
+  return `<div class="admin-summary" data-testid="admin-summary"><article><p><strong>${matrix.students.length}</strong> alumnos</p><span>En tu grupo</span></article><article><p><strong>${submissions}</strong> trabajos cumplidos</p><span>Recibidas</span></article><article><p><strong>${missing}</strong> pendientes</p><span>Por entregar</span></article></div>`;
 }
 
 export function teacherSummary(responses) {

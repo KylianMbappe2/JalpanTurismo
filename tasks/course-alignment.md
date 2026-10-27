@@ -21,3 +21,10 @@ Solicitud vigente: seis actividades principales; conservar cualquier trabajo ant
 
 - El perfil turístico acepta avance parcial o simulación sin publicar, incluso para participantes sin negocio propio.
 - El seguimiento del administrador usa una tabla de cotejo con una fila por alumno, seis columnas de actividades, palomitas y totales. Las equivalencias se calculan al mostrar los registros; no se crean entregas ni se reescriben folios.
+
+
+## Evidencias conservadas y diagnóstico acreditado
+
+Por petición del docente, la diagnóstica cuenta para todos como «Acreditada por docente» cuando no hay una entrega real. Se conserva el cuestionario y cualquier respuesta anterior; no se insertan entregas ni respuestas inventadas. La política se aplica al grupo del curso y se distingue en el CSV.
+
+El mapeo también reconoce nombres explícitos de archivos acordes a las seis actividades. Las evidencias de trabajos entregados cuentan en la actividad relacionada; los archivos sin entrega definitiva se muestran como avance. Los nombres genéricos permanecen en el trabajo original y todos los archivos del participante aparecen en «Mis archivos guardados». El docente puede abrir los archivos desde la tabla y previsualizarlos en la misma página. Los permisos de acceso siguen comprobándose en el servidor. Estos cambios no requieren otra migración SQL.
